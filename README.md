@@ -1,16 +1,44 @@
-# React + Vite
+# Writepad
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Writepad is a personal notes application with a React frontend and an ASP.NET Core Web API backend.
 
-Currently, two official plugins are available:
+## Frontend — React + Vite
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+The frontend provides the user interface for creating, viewing, and managing notes. It uses React components, context for state management, and Vite for development and building.
 
-## React Compiler
+### Frontend technologies
+- React
+- JavaScript
+- Vite
+- CSS
+- React Context API
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Backend — ASP.NET Core Web API
 
-## Expanding the ESLint configuration
+The backend provides APIs for creating and managing personal notes. It includes JWT authentication, refresh tokens, password hashing, user management, and secure CRUD operations using Entity Framework Core and SQL Server.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### Backend technologies
+- ASP.NET Core Web API
+- C#
+- JWT authentication
+- Entity Framework Core
+- SQL Server
+
+## Project structure
+
+- `src/` — React frontend source code
+- `public/` — Public frontend assets
+- `package.json` — Frontend dependencies and scripts
+- Backend files — ASP.NET Core API, authentication, and database logic (if maintained in this repository)
+
+## Running the React frontend
+
+Install dependencies and start the development server:
+
+```bash
+npm install
+npm run dev
+```
+
+Vite will display the local URL in your terminal.
+
