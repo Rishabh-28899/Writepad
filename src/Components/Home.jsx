@@ -1,16 +1,28 @@
 
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { showAlert } from "./Alert";
 
 function Home() {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
+    const [loading, setLoading] = useState(false);
+
+    const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        console.log("Submit clicked");
-        console.log("Username:", username);
-        console.log("Password:", password);
+        if (!username.trim() || !password) {
+            await showAlert(
+                "Validation Error",
+                "Please enter username and password.",
+                "error"
+            );
+            return;
+        }
+
+        setLoading(true);
 
         try {
             const response = await fetch(
@@ -21,94 +33,132 @@ function Home() {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        username: username,
+                        username: username.trim(),
                         password: password
                     })
                 }
             );
 
-            console.log("Login status:", response.status);
-
             const data = await response.json();
 
-            console.log("Login response:", data);
-
             if (!response.ok) {
-                throw new Error(`Login failed: ${response.status}`);
+                await showAlert(
+                    "Login Failed!",
+                    data.message || "Invalid username or password.",
+                    "error"
+                );
+                return;
             }
 
+            if (!data.accessToken) {
+                await showAlert(
+                    "Login Failed!",
+                    "Access token was not returned by the API.",
+                    "error"
+                );
+                return;
+            }
+
+            // Save tokens returned by the API
             localStorage.setItem("accessToken", data.accessToken);
-            localStorage.setItem("refreshToken", data.refreshToken);
 
-            console.log("Access token saved");
-            console.log("Refresh token saved");
+            if (data.refreshToken) {
+                localStorage.setItem("refreshToken", data.refreshToken);
+            } else {
+                localStorage.removeItem("refreshToken");
+            }
 
-            alert("Login successful!");
+            // Show success alert
+            await showAlert(
+                "Login Successful!",
+                "Welcome to WritePad.",
+                "success"
+            );
+
+            // Navigate after the alert closes
+            navigate("/notes", { replace: true });
+
         } catch (error) {
             console.error("Login error:", error);
+
+            await showAlert(
+                "Connection Error!",
+                "Unable to connect to the server. Please check your API.",
+                "error"
+            );
+        } finally {
+            setLoading(false);
         }
     };
 
     return (
-        <div className="container">
+        <div className="container mt-5">
+            <div className="row justify-content-center">
+                <div className="col-md-5">
+                    <div className="card shadow p-4">
+                        <h2 className="text-center mb-4">
+                            WritePad Login
+                        </h2>
 
-            <h1>Add Notes</h1>
+                        <form onSubmit={handleSubmit}>
+                            <div className="mb-3">
+                                <label
+                                    htmlFor="username"
+                                    className="form-label"
+                                >
+                                    Username
+                                </label>
 
-            <form onSubmit={handleSubmit}>
+                                <input
+                                    id="username"
+                                    type="text"
+                                    className="form-control"
+                                    placeholder="Enter username"
+                                    value={username}
+                                    onChange={(e) =>
+                                        setUsername(e.target.value)
+                                    }
+                                    autoComplete="username"
+                                    required
+                                />
+                            </div>
 
-                <div className="mb-3 row">
-                    <label
-                        htmlFor="username"
-                        className="col-sm-2 col-form-label"
-                    >
-                        Username
-                    </label>
+                            <div className="mb-3">
+                                <label
+                                    htmlFor="password"
+                                    className="form-label"
+                                >
+                                    Password
+                                </label>
 
-                    <div className="col-sm-10">
-                        <input
-                            type="text"
-                            className="form-control"
-                            id="username"
-                            value={username}
-                            onChange={(e) => setUsername(e.target.value)}
-                        />
+                                <input
+                                    id="password"
+                                    type="password"
+                                    className="form-control"
+                                    placeholder="Enter password"
+                                    value={password}
+                                    onChange={(e) =>
+                                        setPassword(e.target.value)
+                                    }
+                                    autoComplete="current-password"
+                                    required
+                                />
+                            </div>
+
+                            <button
+                                type="submit"
+                                className="btn btn-primary w-100"
+                                disabled={loading}
+                            >
+                                {loading ? "Logging in..." : "Login"}
+                            </button>
+                        </form>
                     </div>
                 </div>
-
-                <div className="mb-3 row">
-                    <label
-                        htmlFor="password"
-                        className="col-sm-2 col-form-label"
-                    >
-                        Password
-                    </label>
-
-                    <div className="col-sm-10">
-                        <input
-                            type="password"
-                            className="form-control"
-                            id="password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="mb-3">
-                    <button
-                        type="submit"
-                        className="btn btn-primary"
-                    >
-                        Submit
-                    </button>
-                </div>
-
-            </form>
+            </div>
         </div>
     );
 }
 
 export default Home;
-
-
 

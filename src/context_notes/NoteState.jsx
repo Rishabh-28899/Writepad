@@ -1,7 +1,9 @@
 
 import React, { useState } from "react";
 import noteContext from "./noteContext";
+import Swal from "sweetalert2";
 
+// GET NOTES
 const NoteState = (props) => {
     const host = "https://localhost:7067";
     const [notes, setNotes] = useState([]);
@@ -24,6 +26,7 @@ const NoteState = (props) => {
 
         const data = await response.json();
         setNotes(data);
+
         return data;
     };
 
@@ -31,48 +34,138 @@ const NoteState = (props) => {
     const addNote = async (title, content, topic) => {
         const accessToken = localStorage.getItem("accessToken");
 
-        const response = await fetch(`${host}/api/Notes`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`
-            },
-            body: JSON.stringify({ title, content, topic })
-        });
+        try {
+            const response = await fetch(`${host}/api/Notes`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({ title, content, topic })
+            });
 
-        if (!response.ok) {
-            throw new Error(`Add note failed: ${response.status}`);
+            if (!response.ok) {
+                const message = await response.text();
+                throw new Error(message || `Add note failed: ${response.status}`);
+            }
+
+            await getNotes();
+
+            await Swal.fire({
+                title: "Note Added!",
+                text: "Your note was saved successfully.",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
+
+            return true;
+        } catch (error) {
+            await Swal.fire({
+                title: "Unable to Add Note",
+                text: error.message || "Something went wrong.",
+                icon: "error"
+            });
+
+
+            throw error;
         }
-
-        const data = await response.json();
-        await getNotes();
-        return data;
     };
 
     // UPDATE NOTE
     const updateNote = async (id, title, description, tag) => {
         const accessToken = localStorage.getItem("accessToken");
 
-        const response = await fetch(`${host}/api/Notes/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`
-            },
-            body: JSON.stringify({
-                Title: title,
-                Description: description,
-                Tag: tag
-            })
+        try {
+            const response = await fetch(`${host}/api/Notes/${id}`, {
+                method: "PUT",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${accessToken}`
+                },
+                body: JSON.stringify({
+                    Title: title,
+                    Description: description,
+                    Tag: tag
+                })
+            });
+
+            if (!response.ok) {
+                const message = await response.text();
+                throw new Error(message || `Update failed: ${response.status}`);
+            }
+
+            await getNotes();
+
+            await Swal.fire({
+                title: "Note Updated!",
+                text: "Your changes have been saved.",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
+
+            return true;
+        } catch (error) {
+            await Swal.fire({
+                title: "Unable to Update Note",
+                text: error.message || "Something went wrong.",
+                icon: "error"
+            });
+
+            throw error;
+        }
+    };
+
+    // DELETE NOTE
+    const deleteNote = async (id) => {
+        const result = await Swal.fire({
+            title: "Are you sure?",
+            text: "This note will be deleted permanently.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#d33",
+            confirmButtonText: "Yes, delete it!",
+            cancelButtonText: "Cancel"
         });
 
-        if (!response.ok) {
-            const message = await response.text();
-            throw new Error(message || `Update failed: ${response.status}`);
+        // Stop if the user cancels
+        if (!result.isConfirmed) {
+            return false;
         }
 
-        await getNotes();
-        return true;
+        const accessToken = localStorage.getItem("accessToken");
+
+        try {
+            const response = await fetch(`${host}/api/Notes/${id}`, {
+                method: "DELETE",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            });
+
+            if (!response.ok) {
+                const message = await response.text();
+                throw new Error(message || `Delete failed: ${response.status}`);
+            }
+
+            await getNotes();
+
+            await Swal.fire({
+                title: "Deleted!",
+                text: "Your note has been deleted.",
+                icon: "success",
+                confirmButtonText: "OK"
+            });
+
+            return true;
+        } catch (error) {
+            await Swal.fire({
+                title: "Unable to Delete Note",
+                text: error.message || "Something went wrong.",
+                icon: "error"
+            });
+
+            throw error;
+        }
     };
 
     return (
@@ -81,7 +174,8 @@ const NoteState = (props) => {
                 notes,
                 getNotes,
                 addNote,
-                updateNote
+                updateNote,
+                deleteNote
             }}
         >
             {props.children}

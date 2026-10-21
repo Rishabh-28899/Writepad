@@ -1,18 +1,25 @@
-
 import { useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Navbar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const isLoggedIn = Boolean(localStorage.getItem("accessToken"));
 
   useEffect(() => {
-    console.log(location);
-  }, [location]);
+    console.log("Current route:", location.pathname);
+  }, [location.pathname]);
+
+  const handleLogout = () => {
+    localStorage.removeItem("accessToken");
+    localStorage.removeItem("refreshToken");
+    navigate("/", { replace: true });
+  };
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light bg-light">
       <div className="container-fluid">
-
         <Link className="navbar-brand" to="/">
           WritePad
         </Link>
@@ -34,64 +41,86 @@ function Navbar() {
           id="navbarSupportedContent"
         >
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
-
             <li className="nav-item">
               <Link
-                className={`nav-link ${location.pathname === "/" ? "active" : ""}`}
+                className={`nav-link ${
+                  location.pathname === "/" ? "active" : ""
+                }`}
                 to="/"
               >
                 Home
               </Link>
             </li>
 
-            <li className="nav-item">
-              <Link
-                className={`nav-link ${location.pathname === "/notes" ? "active" : ""}`}
-                to="/notes"
-              >
-                My Notes
-              </Link>
-            </li>
+            {isLoggedIn && (
+              <>
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${
+                      location.pathname === "/notes" ? "active" : ""
+                    }`}
+                    to="/notes"
+                  >
+                    My Notes
+                  </Link>
+                </li>
+
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${
+                      location.pathname === "/add-note" ? "active" : ""
+                    }`}
+                    to="/add-note"
+                  >
+                    + New Note
+                  </Link>
+                </li>
+              </>
+            )}
 
             <li className="nav-item">
               <Link
-                className={`nav-link ${location.pathname === "/add-note" ? "active" : ""}`}
-                to="/add-note"
-              >
-                + New Note
-              </Link>
-            </li>
-
-            <li className="nav-item">
-              <Link
-                className={`nav-link ${location.pathname === "/about" ? "active" : ""}`}
+                className={`nav-link ${
+                  location.pathname === "/about" ? "active" : ""
+                }`}
                 to="/about"
               >
                 About
               </Link>
             </li>
-
           </ul>
 
-          <form
-            className="d-flex"
-            onSubmit={(e) => e.preventDefault()}
-          >
-            <input
-              className="form-control me-2"
-              type="search"
-              placeholder="Search"
-              aria-label="Search"
-            />
+          <div className="d-flex me-3">
+            {!isLoggedIn ? (
+              <>
+                <Link
+                  className={`btn btn-outline-primary me-2 ${
+                    location.pathname === "/" ? "active" : ""
+                  }`}
+                  to="/"
+                >
+                  Login
+                </Link>
 
-            <button
-              className="btn btn-outline-success"
-              type="submit"
-            >
-              Search
-            </button>
-          </form>
-
+                <Link
+                  className={`btn btn-primary ${
+                    location.pathname === "/register" ? "active" : ""
+                  }`}
+                  to="/register"
+                >
+                  Register
+                </Link>
+              </>
+            ) : (
+              <button
+                className="btn btn-outline-danger"
+                type="button"
+                onClick={handleLogout}
+              >
+                Logout
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </nav>
