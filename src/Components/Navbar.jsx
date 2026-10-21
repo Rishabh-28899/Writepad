@@ -1,9 +1,14 @@
-import { useEffect } from "react";
+
+import { useEffect, useContext } from "react";
+import noteContext from "../context_notes/noteContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Access the notes context
+  const { clearNotes } = useContext(noteContext);
 
   const isLoggedIn = Boolean(localStorage.getItem("accessToken"));
 
@@ -11,9 +16,16 @@ function Navbar() {
     console.log("Current route:", location.pathname);
   }, [location.pathname]);
 
+  // LOGOUT
   const handleLogout = () => {
+    // Clear notes belonging to the previous session
+    clearNotes();
+
+    // Remove authentication tokens
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+
+    // Return to login page
     navigate("/", { replace: true });
   };
 
@@ -128,4 +140,5 @@ function Navbar() {
 }
 
 export default Navbar;
+
 

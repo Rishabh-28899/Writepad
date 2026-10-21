@@ -53,14 +53,13 @@ const Register = () => {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        username: username,
-                        email: email,
+                        username,
+                        email,
                         password: credentials.password
                     })
                 }
             );
 
-            // Read the response safely, even if it is not JSON.
             const responseText = await response.text();
 
             let data = null;
@@ -89,8 +88,9 @@ const Register = () => {
             }
 
             setSuccess(
-                data?.message ||
-                "Registration successful! Redirecting to login..."
+                typeof data === "object" && data?.message
+                    ? data.message
+                    : "Registration successful! Redirecting to login..."
             );
 
             setCredentials({
@@ -100,8 +100,9 @@ const Register = () => {
                 confirmPassword: ""
             });
 
+            // Navigate to the actual login route
             setTimeout(() => {
-                navigate("/login");
+                navigate("/", { replace: true });
             }, 1500);
 
         } catch (err) {
@@ -112,9 +113,7 @@ const Register = () => {
                     "Could not connect to the backend. Check that the API is running and its HTTPS certificate is trusted."
                 );
             } else {
-                setError(
-                    err.message || "Registration failed."
-                );
+                setError(err.message || "Registration failed.");
             }
         } finally {
             setLoading(false);
@@ -137,32 +136,22 @@ const Register = () => {
                             </p>
 
                             {error && (
-                                <div
-                                    className="alert alert-danger"
-                                    role="alert"
-                                >
+                                <div className="alert alert-danger" role="alert">
                                     {error}
                                 </div>
                             )}
 
                             {success && (
-                                <div
-                                    className="alert alert-success"
-                                    role="alert"
-                                >
+                                <div className="alert alert-success" role="alert">
                                     {success}
                                 </div>
                             )}
 
                             <form onSubmit={handleSubmit}>
                                 <div className="mb-3">
-                                    <label
-                                        htmlFor="name"
-                                        className="form-label"
-                                    >
+                                    <label htmlFor="name" className="form-label">
                                         Username
                                     </label>
-
                                     <input
                                         id="name"
                                         type="text"
@@ -177,13 +166,9 @@ const Register = () => {
                                 </div>
 
                                 <div className="mb-3">
-                                    <label
-                                        htmlFor="email"
-                                        className="form-label"
-                                    >
+                                    <label htmlFor="email" className="form-label">
                                         Email Address
                                     </label>
-
                                     <input
                                         id="email"
                                         type="email"
@@ -198,13 +183,9 @@ const Register = () => {
                                 </div>
 
                                 <div className="mb-3">
-                                    <label
-                                        htmlFor="password"
-                                        className="form-label"
-                                    >
+                                    <label htmlFor="password" className="form-label">
                                         Password
                                     </label>
-
                                     <input
                                         id="password"
                                         type="password"
@@ -225,7 +206,6 @@ const Register = () => {
                                     >
                                         Confirm Password
                                     </label>
-
                                     <input
                                         id="confirmPassword"
                                         type="password"
@@ -244,15 +224,13 @@ const Register = () => {
                                     className="btn btn-primary w-100"
                                     disabled={loading}
                                 >
-                                    {loading
-                                        ? "Registering..."
-                                        : "Register"}
+                                    {loading ? "Registering..." : "Register"}
                                 </button>
                             </form>
 
                             <p className="text-center mt-3 mb-0">
                                 Already have an account?{" "}
-                                <Link to="/login">
+                                <Link to="/">
                                     Login here
                                 </Link>
                             </p>
@@ -266,5 +244,6 @@ const Register = () => {
 };
 
 export default Register;
+
 
 

@@ -3,36 +3,63 @@ import React, { useState } from "react";
 import noteContext from "./noteContext";
 import Swal from "sweetalert2";
 
-// GET NOTES
 const NoteState = (props) => {
     const host = "https://localhost:7067";
     const [notes, setNotes] = useState([]);
 
-    // GET NOTES
+    // Clear notes from the previous session/user
+    const clearNotes = () => {
+        setNotes([]);
+    };
+
+    // GET NOTES BELONGING TO THE CURRENT USER
     const getNotes = async () => {
         const accessToken = localStorage.getItem("accessToken");
 
-        const response = await fetch(`${host}/api/Notes/all`, {
-            method: "GET",
-            headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`
-            }
-        });
-
-        if (!response.ok) {
-            throw new Error(`Get notes failed: ${response.status}`);
+        // Never keep displaying old notes without a token
+        if (!accessToken) {
+            setNotes([]);
+            return [];
         }
 
-        const data = await response.json();
-        setNotes(data);
+        try {
+            const response = await fetch(`${host}/api/Notes/all`, {
+                method: "GET",
+                headers: {
+                    Authorization: `Bearer ${accessToken}`
+                }
+            });
 
-        return data;
+            if (!response.ok) {
+                if (response.status === 401 || response.status === 403) {
+                    setNotes([]);
+                }
+
+                throw new Error(`Get notes failed: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Avoid applying a response from an older login session
+            if (localStorage.getItem("accessToken") !== accessToken) {
+                return [];
+            }
+
+            setNotes(data);
+            return data;
+        } catch (error) {
+            console.error("Get notes error:", error);
+            throw error;
+        }
     };
 
     // ADD NOTE
     const addNote = async (title, content, topic) => {
         const accessToken = localStorage.getItem("accessToken");
+
+        if (!accessToken) {
+            throw new Error("Please log in before adding a note.");
+        }
 
         try {
             const response = await fetch(`${host}/api/Notes`, {
@@ -66,7 +93,6 @@ const NoteState = (props) => {
                 icon: "error"
             });
 
-
             throw error;
         }
     };
@@ -74,6 +100,10 @@ const NoteState = (props) => {
     // UPDATE NOTE
     const updateNote = async (id, title, description, tag) => {
         const accessToken = localStorage.getItem("accessToken");
+
+        if (!accessToken) {
+            throw new Error("Please log in before updating a note.");
+        }
 
         try {
             const response = await fetch(`${host}/api/Notes/${id}`, {
@@ -84,8 +114,8 @@ const NoteState = (props) => {
                 },
                 body: JSON.stringify({
                     Title: title,
-                    Description: description,
-                    Tag: tag
+                    Content: description,
+                    Topic: tag
                 })
             });
 
@@ -127,12 +157,16 @@ const NoteState = (props) => {
             cancelButtonText: "Cancel"
         });
 
-        // Stop if the user cancels
         if (!result.isConfirmed) {
             return false;
         }
 
         const accessToken = localStorage.getItem("accessToken");
+
+        if (!accessToken) {
+            setNotes([]);
+            throw new Error("Please log in before deleting a note.");
+        }
 
         try {
             const response = await fetch(`${host}/api/Notes/${id}`, {
@@ -175,7 +209,8 @@ const NoteState = (props) => {
                 getNotes,
                 addNote,
                 updateNote,
-                deleteNote
+                deleteNote,
+                clearNotes
             }}
         >
             {props.children}
@@ -184,4 +219,5 @@ const NoteState = (props) => {
 };
 
 export default NoteState;
+
 
