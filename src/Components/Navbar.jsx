@@ -1,31 +1,35 @@
 
-import { useEffect, useContext } from "react";
+import { useEffect, useContext, useState } from "react";
 import noteContext from "../context_notes/noteContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
 function Navbar() {
   const location = useLocation();
   const navigate = useNavigate();
-
-  // Access the notes context
   const { clearNotes } = useContext(noteContext);
 
-  const isLoggedIn = Boolean(localStorage.getItem("accessToken"));
+  const [isLoggedIn, setIsLoggedIn] = useState(
+    Boolean(localStorage.getItem("accessToken"))
+  );
 
+  // Log current route for debugging
   useEffect(() => {
     console.log("Current route:", location.pathname);
   }, [location.pathname]);
 
-  // LOGOUT
+  // Update login state after navigation
+  useEffect(() => {
+    setIsLoggedIn(Boolean(localStorage.getItem("accessToken")));
+  }, [location.pathname]);
+
+  // Logout
   const handleLogout = () => {
-    // Clear notes belonging to the previous session
     clearNotes();
 
-    // Remove authentication tokens
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
 
-    // Return to login page
+    setIsLoggedIn(false);
     navigate("/", { replace: true });
   };
 
@@ -53,6 +57,7 @@ function Navbar() {
           id="navbarSupportedContent"
         >
           <ul className="navbar-nav me-auto mb-2 mb-lg-0">
+            {/* Home */}
             <li className="nav-item">
               <Link
                 className={`nav-link ${
@@ -64,8 +69,10 @@ function Navbar() {
               </Link>
             </li>
 
+            {/* Logged-in user links */}
             {isLoggedIn && (
               <>
+                {/* My Notes */}
                 <li className="nav-item">
                   <Link
                     className={`nav-link ${
@@ -77,6 +84,7 @@ function Navbar() {
                   </Link>
                 </li>
 
+                {/* Add Note */}
                 <li className="nav-item">
                   <Link
                     className={`nav-link ${
@@ -87,9 +95,34 @@ function Navbar() {
                     + New Note
                   </Link>
                 </li>
+
+                {/* Admin Dashboard */}
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${
+                      location.pathname === "/admin" ? "active" : ""
+                    }`}
+                    to="/admin"
+                  >
+                    Admin Dashboard
+                  </Link>
+                </li>
+
+                {/* Add User */}
+                <li className="nav-item">
+                  <Link
+                    className={`nav-link ${
+                      location.pathname === "/admin/add-user" ? "active" : ""
+                    }`}
+                    to="/admin/add-user"
+                  >
+                    + Add User
+                  </Link>
+                </li>
               </>
             )}
 
+            {/* About */}
             <li className="nav-item">
               <Link
                 className={`nav-link ${
@@ -102,22 +135,19 @@ function Navbar() {
             </li>
           </ul>
 
+          {/* Login, Register and Logout */}
           <div className="d-flex me-3">
             {!isLoggedIn ? (
               <>
                 <Link
-                  className={`btn btn-outline-primary me-2 ${
-                    location.pathname === "/" ? "active" : ""
-                  }`}
+                  className="btn btn-outline-primary me-2"
                   to="/"
                 >
                   Login
                 </Link>
 
                 <Link
-                  className={`btn btn-primary ${
-                    location.pathname === "/register" ? "active" : ""
-                  }`}
+                  className="btn btn-primary"
                   to="/register"
                 >
                   Register
@@ -140,5 +170,3 @@ function Navbar() {
 }
 
 export default Navbar;
-
-
