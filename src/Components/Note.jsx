@@ -1,5 +1,5 @@
 
-import React, { useContext, useEffect, useState } from "react";
+import  { useContext, useEffect, useState } from "react";
 import noteContext from "../context_notes/noteContext";
 import NotesItem from "./NotesItem";
 

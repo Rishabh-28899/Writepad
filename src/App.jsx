@@ -1,6 +1,4 @@
 
-import React from "react";
-
 import {
     BrowserRouter as Router,
     Routes,
@@ -13,7 +11,7 @@ import About from "./Components/About.jsx";
 import Navbar from "./Components/Navbar.jsx";
 import Notes from "./Components/Note.jsx";
 import AddNote from "./Components/AddNote.jsx";
-import Register from "./Components/Register";
+import Register from "./Components/Register.jsx";
 import ProtectedRoute from "./Components/ProtectedRoute.jsx";
 import Admin from "./Components/Admin.jsx";
 import AddUser from "./Components/AddUser.jsx";
@@ -35,9 +33,7 @@ function App() {
 
                     <Routes>
 
-                        {/* =====================
-                            PUBLIC PAGES
-                        ===================== */}
+                        {/* PUBLIC ROUTES */}
 
                         <Route
                             path="/"
@@ -54,10 +50,7 @@ function App() {
                             element={<About />}
                         />
 
-
-                        {/* =====================
-                            PROTECTED USER PAGES
-                        ===================== */}
+                        {/* PROTECTED USER ROUTES */}
 
                         <Route element={<ProtectedRoute />}>
 
@@ -73,12 +66,11 @@ function App() {
 
                         </Route>
 
+                        {/* ADMIN ROUTES */}
 
-                        {/* =====================
-                            ADMIN DASHBOARD
-                        ===================== */}
-
-                        <Route element={<ProtectedRoute adminOnly={true} />}>
+                        <Route
+                            element={<ProtectedRoute adminOnly={true} />}
+                        >
 
                             <Route
                                 path="/admin"
@@ -86,7 +78,7 @@ function App() {
                             />
 
                             <Route
-                                path="/admin/add-user"
+                                path="/admin/add-user"    
                                 element={<AddUser />}
                             />
 
@@ -102,6 +94,7 @@ function App() {
 }
 
 export default App;
+
 
 
 

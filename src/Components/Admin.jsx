@@ -1,5 +1,5 @@
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 const API = "https://localhost:7067/api/Admin";
 

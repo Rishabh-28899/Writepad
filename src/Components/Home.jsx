@@ -8,7 +8,7 @@ function Home() {
     const [password, setPassword] = useState("");
     const [loginType, setLoginType] = useState("User");
     const [loading, setLoading] = useState(false);
-cd cd
+
     const navigate = useNavigate();
 
     const handleSubmit = async (e) => {
@@ -160,7 +160,7 @@ cd cd
                             Sign in to your account
                         </p>
 
-                        <div className="btn-group w-100 mb-4" role="group">
+                        <div className="btn-group w-100 mb-4" role="group"> 
                             <button
                                 type="button"
                                 className={`btn ${
