@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import  { useState } from "react";
 import noteContext from "./noteContext";
 import Swal from "sweetalert2";
 
@@ -7,20 +7,24 @@ const NoteState = (props) => {
     const host = "https://localhost:7067";
     const [notes, setNotes] = useState([]);
 
-    // Clear notes from the previous session/user
+    // Clear notes from the previous session/user 
     const clearNotes = () => {
         setNotes([]);
     };
 
     // GET NOTES BELONGING TO THE CURRENT USER
-    const getNotes = async () => {
-        const accessToken = localStorage.getItem("accessToken");
 
-        // Never keep displaying old notes without a token
+    const getNotes = async () => {
+        const accessToken = localStorage.getItem("accessToken"); 
+
         if (!accessToken) {
+            console.error("Access token is missing!");
             setNotes([]);
             return [];
         }
+
+        console.log("Access token exists:", !!accessToken);
+        console.log("Token length:", accessToken.length);
 
         try {
             const response = await fetch(`${host}/api/Notes/all`, {
@@ -30,7 +34,13 @@ const NoteState = (props) => {
                 }
             });
 
+            console.log("API Status:", response.status);
+
             if (!response.ok) {
+                const errorText = await response.text();
+
+                console.error("API Error Response:", errorText);
+
                 if (response.status === 401 || response.status === 403) {
                     setNotes([]);
                 }
@@ -40,13 +50,14 @@ const NoteState = (props) => {
 
             const data = await response.json();
 
-            // Avoid applying a response from an older login session
             if (localStorage.getItem("accessToken") !== accessToken) {
                 return [];
             }
 
             setNotes(data);
+
             return data;
+
         } catch (error) {
             console.error("Get notes error:", error);
             throw error;
