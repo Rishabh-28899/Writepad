@@ -1,5 +1,5 @@
 
-import  { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import noteContext from "../context_notes/noteContext";
 import NotesItem from "./NotesItem";
 
@@ -21,31 +21,46 @@ const Notes = () => {
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
 
+    // Load notes when component mounts
     useEffect(() => {
-        getNotes();
-    }, []);
+        let active = true;
 
-    // Open the modal and load the selected note
+        const loadNotes = async () => {
+            try {
+                await getNotes();
+            } catch (err) {
+                if (active) {
+                    console.error("Unable to load notes:", err.message);
+                    setError(err.message || "Unable to load notes.");
+                }
+            }
+        };
+
+        loadNotes();
+
+        return () => {
+            active = false;
+        };
+    }, [getNotes]);
+
+    // Open edit modal
     const handleEdit = (note) => {
         setCurrentNote(note);
         setTitle(note.title || "");
-        setDescription(note.description || "");
-        setTag(note.tag || "");
+        setDescription(note.description || note.content || "");
+        setTag(note.tag || note.topic || "");
         setError("");
         setShowModal(true);
     };
 
-    // Update the selected note
+    // Update note
     const handleUpdate = async (e) => {
         e.preventDefault();
 
         if (!currentNote) return;
 
-        // Check whether NoteState provides updateNote
         if (typeof updateNote !== "function") {
-            setError(
-                "updateNote is missing from NoteState.jsx. Add the function and expose it through noteContext.Provider."
-            );
+            setError("updateNote is missing from NoteState.jsx.");
             return;
         }
 
@@ -60,10 +75,10 @@ const Notes = () => {
                 tag
             );
 
-            await getNotes();
-
+            // NoteState handles refreshing notes
             setShowModal(false);
             setCurrentNote(null);
+
         } catch (err) {
             setError(err.message || "Failed to update note.");
         } finally {
@@ -71,28 +86,34 @@ const Notes = () => {
         }
     };
 
-    // Delete the selected note
+    // Delete note
     const handleDelete = async (id) => {
         if (typeof deleteNote !== "function") {
             alert("deleteNote is missing from NoteState.jsx.");
             return;
         }
 
-        if (!window.confirm("Are you sure you want to delete this note?")) {
-            return;
-        }
-
         try {
+            // NoteState handles confirmation and refreshing
             await deleteNote(id);
-            await getNotes();
         } catch (err) {
+            console.error("Unable to delete note:", err);
             alert(err.message || "Failed to delete note.");
         }
     };
 
     return (
         <div className="container">
-            <h2 className="my-3 text-center">Your Notes</h2>
+
+            <h2 className="my-3 text-center">
+                Your Notes
+            </h2>
+
+            {error && !showModal && (
+                <div className="alert alert-danger">
+                    {error}
+                </div>
+            )}
 
             <div className="row">
                 {notes.map((note) => (
@@ -116,7 +137,9 @@ const Notes = () => {
                     >
                         <div className="modal-dialog modal-dialog-centered">
                             <div className="modal-content">
+
                                 <form onSubmit={handleUpdate}>
+
                                     <div className="modal-header">
                                         <h5 className="modal-title">
                                             Edit Note
@@ -132,6 +155,7 @@ const Notes = () => {
                                     </div>
 
                                     <div className="modal-body">
+
                                         {error && (
                                             <div className="alert alert-danger">
                                                 {error}
@@ -142,6 +166,7 @@ const Notes = () => {
                                             <label className="form-label">
                                                 Title
                                             </label>
+
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -157,6 +182,7 @@ const Notes = () => {
                                             <label className="form-label">
                                                 Description
                                             </label>
+
                                             <textarea
                                                 className="form-control"
                                                 rows="4"
@@ -172,6 +198,7 @@ const Notes = () => {
                                             <label className="form-label">
                                                 Tag
                                             </label>
+
                                             <input
                                                 type="text"
                                                 className="form-control"
@@ -181,9 +208,11 @@ const Notes = () => {
                                                 }
                                             />
                                         </div>
+
                                     </div>
 
                                     <div className="modal-footer">
+
                                         <button
                                             type="button"
                                             className="btn btn-secondary"
@@ -202,7 +231,9 @@ const Notes = () => {
                                                 ? "Saving..."
                                                 : "Save Changes"}
                                         </button>
+
                                     </div>
+
                                 </form>
                             </div>
                         </div>
@@ -211,15 +242,19 @@ const Notes = () => {
                     <div
                         className="modal-backdrop fade show"
                         onClick={() => {
-                            if (!saving) setShowModal(false);
+                            if (!saving) {
+                                setShowModal(false);
+                            }
                         }}
                     />
                 </>
             )}
+
         </div>
     );
 };
 
 export default Notes;
+
 
 

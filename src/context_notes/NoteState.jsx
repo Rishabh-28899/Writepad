@@ -1,30 +1,29 @@
 
-import  { useState } from "react";
+import { useState, useCallback } from "react";
 import noteContext from "./noteContext";
 import Swal from "sweetalert2";
 
 const NoteState = (props) => {
     const host = "https://localhost:7067";
+
     const [notes, setNotes] = useState([]);
 
-    // Clear notes from the previous session/user 
-    const clearNotes = () => {
+    // CLEAR NOTES
+    const clearNotes = useCallback(() => {
         setNotes([]);
-    };
+    }, []);
 
-    // GET NOTES BELONGING TO THE CURRENT USER
-
-    const getNotes = async () => {
+    // GET NOTES BELONGING TO CURRENT USER
+    const getNotes = useCallback(async () => {
         const accessToken = localStorage.getItem("accessToken"); 
 
         if (!accessToken) {
             console.error("Access token is missing!");
-            setNotes([]);
+            clearNotes();
             return [];
         }
 
-        console.log("Access token exists:", !!accessToken);
-        console.log("Token length:", accessToken.length);
+        console.log("Access token exists:", true);
 
         try {
             const response = await fetch(`${host}/api/Notes/all`, {
@@ -41,28 +40,36 @@ const NoteState = (props) => {
 
                 console.error("API Error Response:", errorText);
 
-                if (response.status === 401 || response.status === 403) {
-                    setNotes([]);
+                if (
+                    (response.status === 401 || response.status === 403) &&
+                    localStorage.getItem("accessToken") === accessToken
+                ) {
+                    clearNotes();
                 }
 
-                throw new Error(`Get notes failed: ${response.status}`);
+                throw new Error(
+                    errorText || `Get notes failed: ${response.status}`
+                );
             }
 
             const data = await response.json();
 
+            // Prevent an old request from updating a new user's notes.
             if (localStorage.getItem("accessToken") !== accessToken) {
                 return [];
             }
 
-            setNotes(data);
+            const result = Array.isArray(data) ? data : [];
 
-            return data;
+            setNotes(result);
+
+            return result;
 
         } catch (error) {
             console.error("Get notes error:", error);
             throw error;
         }
-    };
+    }, [clearNotes]);
 
     // ADD NOTE
     const addNote = async (title, content, topic) => {
@@ -79,12 +86,18 @@ const NoteState = (props) => {
                     "Content-Type": "application/json",
                     Authorization: `Bearer ${accessToken}`
                 },
-                body: JSON.stringify({ title, content, topic })
+                body: JSON.stringify({
+                    title,
+                    content,
+                    topic
+                })
             });
 
             if (!response.ok) {
                 const message = await response.text();
-                throw new Error(message || `Add note failed: ${response.status}`);
+                throw new Error(
+                    message || `Add note failed: ${response.status}`
+                );
             }
 
             await getNotes();
@@ -97,6 +110,7 @@ const NoteState = (props) => {
             });
 
             return true;
+
         } catch (error) {
             await Swal.fire({
                 title: "Unable to Add Note",
@@ -132,7 +146,9 @@ const NoteState = (props) => {
 
             if (!response.ok) {
                 const message = await response.text();
-                throw new Error(message || `Update failed: ${response.status}`);
+                throw new Error(
+                    message || `Update failed: ${response.status}`
+                );
             }
 
             await getNotes();
@@ -145,6 +161,7 @@ const NoteState = (props) => {
             });
 
             return true;
+
         } catch (error) {
             await Swal.fire({
                 title: "Unable to Update Note",
@@ -175,7 +192,7 @@ const NoteState = (props) => {
         const accessToken = localStorage.getItem("accessToken");
 
         if (!accessToken) {
-            setNotes([]);
+            clearNotes();
             throw new Error("Please log in before deleting a note.");
         }
 
@@ -189,7 +206,9 @@ const NoteState = (props) => {
 
             if (!response.ok) {
                 const message = await response.text();
-                throw new Error(message || `Delete failed: ${response.status}`);
+                throw new Error(
+                    message || `Delete failed: ${response.status}`
+                );
             }
 
             await getNotes();
@@ -202,6 +221,7 @@ const NoteState = (props) => {
             });
 
             return true;
+
         } catch (error) {
             await Swal.fire({
                 title: "Unable to Delete Note",
@@ -230,5 +250,6 @@ const NoteState = (props) => {
 };
 
 export default NoteState;
+
 
 
