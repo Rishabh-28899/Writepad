@@ -1,0 +1,121 @@
+
+/* NOTE CARD */
+.wp-note-card {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	min-height: 190px;
+	padding: 19px;
+	background: #ffffff;
+	border: 1px solid #e5eaf1;
+	border-radius: 12px;
+	box-shadow: 0 3px 12px rgba(15, 23, 42, 0.04);
+	transition: transform 0.2s, box-shadow 0.2s;
+}
+
+	.wp-note-card:hover {
+		transform: translateY(-3px);
+		box-shadow: 0 8px 22px rgba(15, 23, 42, 0.09);
+	}
+
+/* CARD HEADER */
+.wp-note-card-header {
+	display: flex;
+	justify-content: space-between;
+	align-items: flex-start;
+	gap: 10px;
+	margin-bottom: 17px;
+}
+
+.wp-note-title-area {
+	display: flex;
+	align-items: center;
+	gap: 10px;
+	min-width: 0;
+}
+
+.wp-note-icon {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	flex-shrink: 0;
+	width: 34px;
+	height: 34px;
+	border-radius: 8px;
+	background: #eaf1ff;
+	color: #3478f6;
+	font-size: 19px;
+}
+
+.wp-note-title-area h3 {
+	margin: 0;
+	color: #1e293b;
+	font-size: 15px;
+	font-weight: 600;
+	overflow-wrap: anywhere;
+}
+
+/* ACTION BUTTONS */
+.wp-note-actions {
+	display: flex;
+	align-items: center;
+	gap: 7px;
+	flex-shrink: 0;
+}
+
+	.wp-note-actions button {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		width: 31px;
+		height: 31px;
+		padding: 0;
+		border: none;
+		border-radius: 7px;
+		background: #f1f5f9;
+		cursor: pointer;
+		font-size: 14px;
+		transition: background 0.2s;
+	}
+
+.wp-note-edit:hover {
+	background: #dbeafe;
+}
+
+.wp-note-delete:hover {
+	background: #fee2e2;
+}
+
+/* CARD CONTENT */
+.wp-note-card-content {
+	flex: 1;
+}
+
+	.wp-note-card-content p {
+		margin: 0;
+		color: #64748b;
+		font-size: 13px;
+		line-height: 1.7;
+		overflow-wrap: anywhere;
+		white-space: pre-wrap;
+	}
+
+/* CARD FOOTER */
+.wp-note-card-footer {
+	display: flex;
+	align-items: center;
+	margin-top: 20px;
+	padding-top: 13px;
+	border-top: 1px solid #edf0f5;
+}
+
+.wp-note-tag {
+	display: inline-block;
+	padding: 5px 10px;
+	border-radius: 20px;
+	background: #eaf1ff;
+	color: #3478f6;
+	font-size: 11px;
+	font-weight: 600;
+	overflow-wrap: anywhere; 
+}

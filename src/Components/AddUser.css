@@ -1,0 +1,192 @@
+
+.wp-adduser-page {
+    min-height: 750px;
+    padding: 30px;
+    background: #f4f6fa;
+    color: #263043;
+    font-family: Arial, sans-serif;
+}
+
+.wp-adduser-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 28px;
+}
+
+    .wp-adduser-header h1 {
+        margin: 0;
+        color: #1e293b;
+        font-size: 27px;
+    }
+
+    .wp-adduser-header p {
+        margin: 7px 0 0;
+        color: #64748b;
+        font-size: 14px;
+    }
+
+.wp-adduser-back {
+    padding: 11px 16px;
+    border-radius: 8px;
+    background: #17243a;
+    color: white;
+    text-decoration: none;
+    font-size: 13px;
+}
+
+    .wp-adduser-back:hover {
+        background: #263852;
+        color: white;
+    }
+
+.wp-adduser-card {
+    max-width: 750px;
+    margin: 0 auto;
+    background: white;
+    border: 1px solid #e5eaf1;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(15, 23, 42, 0.05);
+}
+
+.wp-adduser-card-header {
+    padding: 24px;
+    border-bottom: 1px solid #edf0f5;
+}
+
+    .wp-adduser-card-header h2 {
+        margin: 0;
+        color: #1e293b;
+        font-size: 21px;
+    }
+
+    .wp-adduser-card-header p {
+        margin: 7px 0 0;
+        color: #64748b;
+        font-size: 13px;
+    }
+
+.wp-adduser-card-body {
+    padding: 28px;
+}
+
+.wp-adduser-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 21px;
+}
+
+    .wp-adduser-field label {
+        color: #334155;
+        font-size: 13px;
+        font-weight: 600;
+    }
+
+    .wp-adduser-field input,
+    .wp-adduser-field select {
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 14px;
+        border: 1px solid #dce3ed;
+        border-radius: 8px;
+        outline: none;
+        background: #fff;
+        color: #263043;
+        font-size: 14px;
+    }
+
+        .wp-adduser-field input:focus,
+        .wp-adduser-field select:focus {
+            border-color: #3478f6;
+            box-shadow: 0 0 0 3px rgba(52, 120, 246, 0.12);
+        }
+
+    .wp-adduser-field small {
+        color: #94a3b8;
+        font-size: 12px;
+    }
+
+.wp-adduser-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 28px;
+}
+
+.wp-adduser-submit,
+.wp-adduser-reset {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+}
+
+.wp-adduser-submit {
+    background: #3478f6;
+    color: white;
+}
+
+    .wp-adduser-submit:hover {
+        background: #2463d5;
+    }
+
+.wp-adduser-reset {
+    background: #e9edf4;
+    color: #334155;
+}
+
+    .wp-adduser-reset:hover {
+        background: #dce3ed;
+    }
+
+    .wp-adduser-submit:disabled,
+    .wp-adduser-reset:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+.wp-adduser-success,
+.wp-adduser-error {
+    padding: 13px 15px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.wp-adduser-success {
+    background: #dcfce7;
+    color: #15803d;
+}
+
+.wp-adduser-error {
+    background: #fee2e2;
+    color: #b91c1c;
+}
+
+@media (max-width: 650px) {
+    .wp-adduser-page {
+        padding: 16px;
+    }
+
+    .wp-adduser-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .wp-adduser-card-body {
+        padding: 18px;
+    }
+
+    .wp-adduser-actions {
+        flex-direction: column;
+    }
+
+    .wp-adduser-submit,
+    .wp-adduser-reset {
+        width: 100%;
+    }
+}

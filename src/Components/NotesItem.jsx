@@ -1,64 +1,57 @@
 
-import React from "react";
+import "./NotesItem.css";
 
-const NotesItem = (props) => {
-    const { note, onEdit, onDelete } = props;
-
-    const handleDelete = () => {
-        if (onDelete) {
-            onDelete(note.id);
-        }
-    };
-
-    const handleEdit = () => {
-        if (onEdit) {
-            onEdit(note);
-        }
-    };
+const NotesItem = ({ note, onEdit, onDelete }) => {
 
     return (
-        <div className="col-md-3">
-            <div className="card my-3">
-                <div className="card-body">
+        <article className="wp-note-card">
 
-                    <div className="d-flex justify-content-between align-items-center mb-3">
+            <div className="wp-note-card-header">
+                <div className="wp-note-title-area">
+                    <span className="wp-note-icon">▤</span>
+                    <h3>{note.title || "Untitled Note"}</h3>
+                </div>
 
-                        <h5 className="card-title mb-0">
-                            {note.title}
-                        </h5>
+                <div className="wp-note-actions">
 
-                        <div className="d-flex gap-2">
-                            <button
-                                type="button"
-                                className="edit-btn"
-                                title="Edit note"
-                                onClick={handleEdit}
-                            >
-                                ✏️
-                            </button>
+                    <button
+                        type="button"
+                        className="wp-note-edit"
+                        title="Edit note"
+                        aria-label="Edit note"
+                        onClick={() => onEdit?.(note)}
+                    >
+                        ✏️
+                    </button>
 
-                            <button
-                                type="button"
-                                className="delete-btn"
-                                title="Delete note"
-                                onClick={handleDelete}
-                            >
-                                🗑️
-                            </button>
-                        </div>
-
-                    </div>
-
-                    <p className="card-text">
-                        {note.description}
-                    </p>
-
-                    <p>{note.tag}</p>
+                    <button
+                        type="button"
+                        className="wp-note-delete"
+                        title="Delete note"
+                        aria-label="Delete note"
+                        onClick={() => onDelete?.(note.id)}
+                    >
+                        🗑️
+                    </button>
 
                 </div>
             </div>
-        </div>
+
+            <div className="wp-note-card-content">
+                <p>
+                    {note.description || note.content || "No description available."}
+                </p>
+            </div>
+
+            <div className="wp-note-card-footer">
+                <span className="wp-note-tag">
+                    #{note.tag || note.topic || "General"}
+                </span>
+            </div>
+
+        </article>
     );
 };
 
 export default NotesItem;
+
