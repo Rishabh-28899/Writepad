@@ -1,5 +1,6 @@
 
 import { useState, useCallback } from "react";
+import { apiRequest } from "../Services/apiClient";
 import noteContext from "./noteContext";
 import Swal from "sweetalert2";
 
@@ -15,7 +16,7 @@ const NoteState = (props) => {
 
     // GET NOTES BELONGING TO CURRENT USER
     const getNotes = useCallback(async () => {
-        const accessToken = localStorage.getItem("accessToken"); 
+        const accessToken = localStorage.getItem("accessToken");
 
         if (!accessToken) {
             console.error("Access token is missing!");
@@ -23,14 +24,9 @@ const NoteState = (props) => {
             return [];
         }
 
-        console.log("Access token exists:", true);
-
         try {
-            const response = await fetch(`${host}/api/Notes/all`, {
-                method: "GET",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
+            const response = await apiRequest(`${host}/api/Notes/all`, {
+                method: "GET"
             });
 
             console.log("API Status:", response.status);
@@ -54,11 +50,6 @@ const NoteState = (props) => {
 
             const data = await response.json();
 
-            // Prevent an old request from updating a new user's notes.
-            if (localStorage.getItem("accessToken") !== accessToken) {
-                return [];
-            }
-
             const result = Array.isArray(data) ? data : [];
 
             setNotes(result);
@@ -80,11 +71,10 @@ const NoteState = (props) => {
         }
 
         try {
-            const response = await fetch(`${host}/api/Notes`, {
+            const response = await apiRequest(`${host}/api/Notes`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     title,
@@ -131,11 +121,10 @@ const NoteState = (props) => {
         }
 
         try {
-            const response = await fetch(`${host}/api/Notes/${id}`, {
+            const response = await apiRequest(`${host}/api/Notes/${id}`, {
                 method: "PUT",
                 headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${accessToken}`
+                    "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
                     Title: title,
@@ -197,11 +186,8 @@ const NoteState = (props) => {
         }
 
         try {
-            const response = await fetch(`${host}/api/Notes/${id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${accessToken}`
-                }
+            const response = await apiRequest(`${host}/api/Notes/${id}`, {
+                method: "DELETE"
             });
 
             if (!response.ok) {
@@ -250,6 +236,7 @@ const NoteState = (props) => {
 };
 
 export default NoteState;
+
 
 
 

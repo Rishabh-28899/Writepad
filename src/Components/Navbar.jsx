@@ -1,5 +1,5 @@
 
-import { useEffect, useContext, useState } from "react";
+import { useContext } from "react";
 import noteContext from "../context_notes/noteContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 
@@ -55,28 +55,56 @@ function Navbar() {
 
     const { clearNotes } = useContext(noteContext);
 
-    const [auth, setAuth] = useState(getAuthInfo);
+    // Get authentication information directly
+    const auth = getAuthInfo();
 
-    // Update login and role information after navigation
-    useEffect(() => {
-        setAuth(getAuthInfo());
-        console.log("Current route:", location.pathname);
-    }, [location.pathname]);
+    // Logout with backend refresh-token revocation
+    const handleLogout = async () => {
+        const refreshToken = localStorage.getItem("refreshToken");
 
-    // Logout
-    const handleLogout = () => {
-        clearNotes();
+        try {
+            if (refreshToken) {
+                const response = await fetch(
+                    "https://localhost:7067/api/Auth/logout",
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json"
+                        },
+                        body: JSON.stringify({
+                            refreshToken: refreshToken
+                        })
+                    }
+                );
 
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        localStorage.removeItem("userRole");
+                console.log(
+                    "Backend logout status:",
+                    response.status
+                );
 
-        setAuth({
-            isLoggedIn: false,
-            isAdmin: false
-        });
+                if (!response.ok) {
+                    console.warn(
+                        "Backend logout failed:",
+                        response.status
+                    );
+                }
+            }
 
-        navigate("/", { replace: true });
+        } catch (error) {
+            console.error("Logout API request failed:", error);
+
+        } finally {
+            // Clear frontend notes
+            clearNotes();
+
+            // Remove authentication tokens
+            localStorage.removeItem("accessToken");
+            localStorage.removeItem("refreshToken");
+            localStorage.removeItem("userRole");
+
+            // Redirect to Home
+            navigate("/", { replace: true });
+        }
     };
 
     return (
@@ -122,7 +150,9 @@ function Navbar() {
                             <>
                                 <li className="nav-item">
                                     <Link
-                                        className={`nav-link ${location.pathname === "/notes" ? "active" : ""
+                                        className={`nav-link ${location.pathname === "/notes"
+                                                ? "active"
+                                                : ""
                                             }`}
                                         to="/notes"
                                     >
@@ -132,7 +162,9 @@ function Navbar() {
 
                                 <li className="nav-item">
                                     <Link
-                                        className={`nav-link ${location.pathname === "/add-note" ? "active" : ""
+                                        className={`nav-link ${location.pathname === "/add-note"
+                                                ? "active"
+                                                : ""
                                             }`}
                                         to="/add-note"
                                     >
@@ -174,7 +206,9 @@ function Navbar() {
                         {/* About */}
                         <li className="nav-item">
                             <Link
-                                className={`nav-link ${location.pathname === "/about" ? "active" : ""
+                                className={`nav-link ${location.pathname === "/about"
+                                        ? "active"
+                                        : ""
                                     }`}
                                 to="/about"
                             >
@@ -221,4 +255,5 @@ function Navbar() {
 }
 
 export default Navbar;
+
 
