@@ -23,7 +23,7 @@ const Notes = () => {
     const [error, setError] = useState("");
     const [saving, setSaving] = useState(false);
 
-    // Load notes from the existing API
+    // LOAD NOTES
     useEffect(() => {
         let active = true;
 
@@ -45,17 +45,19 @@ const Notes = () => {
         };
     }, [getNotes]);
 
-    // Open edit modal
+    // OPEN EDIT MODAL
     const handleEdit = (note) => {
         setCurrentNote(note);
+
         setTitle(note.title || "");
         setDescription(note.description || note.content || "");
         setTag(note.tag || note.topic || "");
+
         setError("");
         setShowModal(true);
     };
 
-    // Close edit modal
+    // CLOSE EDIT MODAL
     const closeModal = () => {
         if (saving) return;
 
@@ -64,7 +66,7 @@ const Notes = () => {
         setError("");
     };
 
-    // Update note
+    // UPDATE NOTE
     const handleUpdate = async (e) => {
         e.preventDefault();
 
@@ -80,7 +82,7 @@ const Notes = () => {
             setError("");
 
             await updateNote(
-                currentNote.id,
+                currentNote.noteId,
                 title,
                 description,
                 tag
@@ -96,7 +98,7 @@ const Notes = () => {
         }
     };
 
-    // Delete note
+    // DELETE NOTE
     const handleDelete = async (id) => {
         if (typeof deleteNote !== "function") {
             alert("deleteNote is missing from NoteState.jsx.");
@@ -114,7 +116,7 @@ const Notes = () => {
     return (
         <div className="wp-user-page">
 
-            {/* Dashboard Header */}
+            {/* DASHBOARD HEADER */}
             <header className="wp-user-header">
                 <div>
                     <span className="wp-user-eyebrow">
@@ -128,12 +130,15 @@ const Notes = () => {
                     </p>
                 </div>
 
-                <Link to="/add-note" className="wp-user-add-button">
+                <Link
+                    to="/add-note"
+                    className="wp-user-add-button"
+                >
                     <span>+</span> Add New Note
                 </Link>
             </header>
 
-            {/* Statistics */}
+            {/* STATISTICS */}
             <section className="wp-user-stats">
 
                 <div className="wp-user-stat-card">
@@ -160,13 +165,15 @@ const Notes = () => {
 
             </section>
 
-            {/* Notes Section */}
+            {/* NOTES SECTION */}
             <section className="wp-user-notes-section">
 
                 <div className="wp-user-section-header">
                     <div>
                         <h2>My Notes</h2>
-                        <p>View, edit and manage your saved notes.</p>
+                        <p>
+                            View, edit and manage your saved notes.
+                        </p>
                     </div>
 
                     <span className="wp-user-note-count">
@@ -182,7 +189,9 @@ const Notes = () => {
 
                 {notes.length === 0 ? (
                     <div className="wp-user-empty">
-                        <div className="wp-user-empty-icon">▤</div>
+                        <div className="wp-user-empty-icon">
+                            ▤
+                        </div>
 
                         <h3>No notes available</h3>
 
@@ -202,7 +211,7 @@ const Notes = () => {
                     <div className="wp-user-notes-grid">
                         {notes.map((note) => (
                             <NotesItem
-                                key={note.id}
+                                key={note.noteId}
                                 note={note}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
@@ -213,7 +222,7 @@ const Notes = () => {
 
             </section>
 
-            {/* Custom Edit Modal */}
+            {/* EDIT MODAL */}
             {showModal && (
                 <div
                     className="wp-user-modal-overlay"
@@ -232,8 +241,13 @@ const Notes = () => {
 
                         <div className="wp-user-modal-header">
                             <div>
-                                <h2 id="edit-note-title">Edit Note</h2>
-                                <p>Update your note information.</p>
+                                <h2 id="edit-note-title">
+                                    Edit Note
+                                </h2>
+
+                                <p>
+                                    Update your note information.
+                                </p>
                             </div>
 
                             <button
@@ -322,7 +336,9 @@ const Notes = () => {
                                     className="wp-user-save-button"
                                     disabled={saving}
                                 >
-                                    {saving ? "Saving..." : "Save Changes"}
+                                    {saving
+                                        ? "Saving..."
+                                        : "Save Changes"}
                                 </button>
 
                             </div>
@@ -337,6 +353,7 @@ const Notes = () => {
 };
 
 export default Notes;
+
 
 
 

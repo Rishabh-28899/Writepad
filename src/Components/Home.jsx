@@ -26,6 +26,7 @@ function Home() {
         setLoading(true);
 
         try {
+            // 1. Login API
             const response = await fetch(
                 "https://localhost:7067/api/Auth/login",
                 {
@@ -35,47 +36,46 @@ function Home() {
                     },
                     body: JSON.stringify({
                         username: username.trim(),
-                        password: password
+                        password
                     })
                 }
             );
 
-            const data = await response.json();
+            const result = await response.json();
 
-            if (!response.ok) {
+            if (!response.ok || !result.success) {
                 await showAlert(
                     "Login Failed!",
-                    data.message || "Invalid username or password.",
+                    result.message || "Invalid username or password.",
                     "error"
                 );
                 return;
             }
 
-            if (!data.accessToken) {
+            // 2. Extract tokens from ApiResponse data
+            const accessToken = result.data?.accessToken;
+            const refreshToken = result.data?.refreshToken;
+
+            if (!accessToken || !refreshToken) {
                 await showAlert(
                     "Login Failed!",
-                    "Access token was not returned by the API.",
+                    "Access token or refresh token was not returned by the API.",
                     "error"
                 );
                 return;
             }
 
-            // Save authentication tokens
-            localStorage.setItem("accessToken", data.accessToken);
+            // 3. Save authentication tokens
+            localStorage.setItem("accessToken", accessToken);
+            localStorage.setItem("refreshToken", refreshToken);
 
-            if (data.refreshToken) {
-                localStorage.setItem("refreshToken", data.refreshToken);
-            } else {
-                localStorage.removeItem("refreshToken");
-            }
-
-            // Ask the backend for the authenticated user's actual role
+            // 4. Get authenticated user's actual details
             const userResponse = await fetch(
                 "https://localhost:7067/api/User/getuser",
                 {
                     method: "GET",
                     headers: {
-                        Authorization: `Bearer ${data.accessToken}`
+                        Authorization: `Bearer ${accessToken}`
                     }
                 }
             );
@@ -83,6 +83,7 @@ function Home() {
             if (!userResponse.ok) {
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
+                localStorage.removeItem("userRole");
 
                 await showAlert(
                     "Login Error",
@@ -92,13 +93,33 @@ function Home() {
                 return;
             }
 
-            const userData = await userResponse.json();
-            const actualRole = String(userData.role || "").toLowerCase();
+            const userResult = await userResponse.json();
 
-            // Verify the selected login option matches the real role
+            // GetUser also returns ApiResponse<T>
+            if (!userResult.success || !userResult.data) {
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
+                localStorage.removeItem("userRole");
+
+                await showAlert(
+                    "Login Error",
+                    userResult.message || "Unable to retrieve user details.",
+                    "error"
+                );
+                return;
+            }
+
+            const userData = userResult.data;
+
+            const actualRole = String(
+                userData.role || ""
+            ).toLowerCase();
+
+            // 5. Verify selected login option against actual role
             if (loginType === "Admin" && actualRole !== "admin") {
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
+                localStorage.removeItem("userRole");
 
                 await showAlert(
                     "Access Denied",
@@ -111,6 +132,7 @@ function Home() {
             if (loginType === "User" && actualRole === "admin") {
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
+                localStorage.removeItem("userRole");
 
                 await showAlert(
                     "Select Admin Login",
@@ -120,7 +142,7 @@ function Home() {
                 return;
             }
 
-            // Save role for frontend display/routing
+            // 6. Save actual role
             localStorage.setItem("userRole", userData.role);
 
             await showAlert(
@@ -129,11 +151,13 @@ function Home() {
                 "success"
             );
 
+            // 7. Navigate according to actual role
             if (actualRole === "admin") {
                 navigate("/admin", { replace: true });
             } else {
                 navigate("/notes", { replace: true });
             }
+
         } catch (error) {
             console.error("Login error:", error);
 
@@ -142,6 +166,7 @@ function Home() {
                 "Unable to connect to the server or verify your account. Check that your backend is running.",
                 "error"
             );
+
         } finally {
             setLoading(false);
         }
@@ -160,14 +185,13 @@ function Home() {
                             Sign in to your account
                         </p>
 
-                        <div className="btn-group w-100 mb-4" role="group"> 
+                        <div className="btn-group w-100 mb-4" role="group">
                             <button
                                 type="button"
-                                className={`btn ${
-                                    loginType === "User"
+                                className={`btn ${loginType === "User"
                                         ? "btn-primary"
                                         : "btn-outline-primary"
-                                }`}
+                                    }`}
                                 onClick={() => setLoginType("User")}
                                 disabled={loading}
                             >
@@ -176,11 +200,10 @@ function Home() {
 
                             <button
                                 type="button"
-                                className={`btn ${
-                                    loginType === "Admin"
+                                className={`btn ${loginType === "Admin"
                                         ? "btn-dark"
                                         : "btn-outline-dark"
-                                }`}
+                                    }`}
                                 onClick={() => setLoginType("Admin")}
                                 disabled={loading}
                             >
@@ -241,18 +264,17 @@ function Home() {
 
                             <button
                                 type="submit"
-                                className={`btn ${
-                                    loginType === "Admin"
+                                className={`btn ${loginType === "Admin"
                                         ? "btn-dark"
                                         : "btn-primary"
-                                } w-100`}
+                                    } w-100`}
                                 disabled={loading}
                             >
                                 {loading
                                     ? "Logging in..."
                                     : loginType === "Admin"
-                                    ? "Login as Admin"
-                                    : "Login as User"}
+                                        ? "Login as Admin"
+                                        : "Login as User"}
                             </button>
                         </form>
 

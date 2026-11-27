@@ -1,36 +1,49 @@
+
 import React, { useContext, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import noteContext from "../context_notes/noteContext";
 
 const AddNote = () => {
 
-    const context = useContext(noteContext);
+    const { addNote } = useContext(noteContext);
 
-    const { addNote } = context;
+    const navigate = useNavigate();
 
     const [title, setTitle] = useState("");
     const [content, setContent] = useState("");
     const [topic, setTopic] = useState("");
+    const [loading, setLoading] = useState(false);
 
+    // HANDLE FORM SUBMISSION
     const handleSubmit = async (e) => {
 
         e.preventDefault();
 
         try {
 
-            await addNote(title, content, topic);
+            setLoading(true);
 
-            alert("Note added successfully!");
+            // Save note and refresh notes list
+            await addNote(title, content, topic);
 
             // Clear form
             setTitle("");
             setContent("");
             setTopic("");
 
+            // Navigate to Notes Dashboard
+            navigate("/notes", { replace: true });
+
         } catch (error) {
 
             console.error("Error adding note:", error);
 
-            alert("Failed to add note");
+            // NoteState already displays the error using SweetAlert
+
+        } finally {
+
+            setLoading(false);
+
         }
     };
 
@@ -43,8 +56,9 @@ const AddNote = () => {
 
             <form onSubmit={handleSubmit}>
 
-                {/* Title */}
+                {/* TITLE */}
                 <div className="mb-3">
+
                     <label
                         htmlFor="title"
                         className="form-label"
@@ -60,11 +74,12 @@ const AddNote = () => {
                         onChange={(e) => setTitle(e.target.value)}
                         required
                     />
+
                 </div>
 
-
-                {/* Content */}
+                {/* CONTENT */}
                 <div className="mb-3">
+
                     <label
                         htmlFor="content"
                         className="form-label"
@@ -80,11 +95,12 @@ const AddNote = () => {
                         onChange={(e) => setContent(e.target.value)}
                         required
                     />
+
                 </div>
 
-
-                {/* Topic */}
+                {/* TOPIC */}
                 <div className="mb-3">
+
                     <label
                         htmlFor="topic"
                         className="form-label"
@@ -99,15 +115,16 @@ const AddNote = () => {
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                     />
+
                 </div>
 
-
-                {/* Submit */}
+                {/* SUBMIT */}
                 <button
                     type="submit"
                     className="btn btn-primary"
+                    disabled={loading}
                 >
-                    Add Note
+                    {loading ? "Saving..." : "Add Note"}
                 </button>
 
             </form>

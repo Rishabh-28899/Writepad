@@ -1,5 +1,5 @@
 
-import  { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -60,37 +60,22 @@ const Register = () => {
                 }
             );
 
-            const responseText = await response.text();
-
-            let data = null;
-
-            try {
-                data = responseText
-                    ? JSON.parse(responseText)
-                    : null;
-            } catch {
-                data = responseText;
-            }
+            const result = await response.json();
 
             console.log("Registration status:", response.status);
-            console.log("Registration response:", data);
+            console.log("Registration response:", result);
 
-            if (!response.ok) {
-                const message =
-                    typeof data === "string"
-                        ? data
-                        : data?.message ||
-                          data?.title ||
-                          data?.error ||
-                          "Registration failed. Please try again.";
-
-                throw new Error(message);
+            // Handle standardized API response
+            if (!response.ok || !result.success) {
+                throw new Error(
+                    result.message ||
+                    "Registration failed. Please try again."
+                );
             }
 
             setSuccess(
-                typeof data === "object" && data?.message
-                    ? data.message
-                    : "Registration successful! Redirecting to login..."
+                result.message ||
+                "Registration successful! Redirecting to login..."
             );
 
             setCredentials({
@@ -100,7 +85,7 @@ const Register = () => {
                 confirmPassword: ""
             });
 
-            // Navigate to the actual login route
+            // Navigate to login after successful registration
             setTimeout(() => {
                 navigate("/", { replace: true });
             }, 1500);
@@ -115,6 +100,7 @@ const Register = () => {
             } else {
                 setError(err.message || "Registration failed.");
             }
+
         } finally {
             setLoading(false);
         }
@@ -152,6 +138,7 @@ const Register = () => {
                                     <label htmlFor="name" className="form-label">
                                         Username
                                     </label>
+
                                     <input
                                         id="name"
                                         type="text"
@@ -169,6 +156,7 @@ const Register = () => {
                                     <label htmlFor="email" className="form-label">
                                         Email Address
                                     </label>
+
                                     <input
                                         id="email"
                                         type="email"
@@ -186,6 +174,7 @@ const Register = () => {
                                     <label htmlFor="password" className="form-label">
                                         Password
                                     </label>
+
                                     <input
                                         id="password"
                                         type="password"
@@ -206,6 +195,7 @@ const Register = () => {
                                     >
                                         Confirm Password
                                     </label>
+
                                     <input
                                         id="confirmPassword"
                                         type="password"

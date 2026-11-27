@@ -26,28 +26,34 @@ const refreshAccessToken = async () => {
         throw new Error("Session expired. Please log in again.");
     }
 
-    const data = await response.json();
+    const result = await response.json();
 
-    localStorage.setItem("accessToken", data.accessToken);
-    localStorage.setItem("refreshToken", data.refreshToken);
+    // Validate standardized API response
+    if (!result.success || !result.data?.accessToken || !result.data?.refreshToken) {
+        throw new Error(
+            result.message || "Token refresh failed."
+        );
+    }
 
-    return data.accessToken;
+    // Store new tokens
+    localStorage.setItem("accessToken", result.data.accessToken);
+    localStorage.setItem("refreshToken", result.data.refreshToken);
+
+    return result.data.accessToken;
 };
 
 // Central API request function
 export const apiRequest = async (url, options = {}) => {
     const accessToken = localStorage.getItem("accessToken");
 
-    const headers = {
+    const createHeaders = (token) => ({
         ...options.headers,
-        Authorization: accessToken
-            ? `Bearer ${accessToken}`
-            : ""
-    };
+        ...(token ? { Authorization: `Bearer ${token}` } : {})
+    });
 
     let response = await fetch(url, {
         ...options,
-        headers
+        headers: createHeaders(accessToken)
     });
 
     // If access token expires, refresh it
@@ -64,10 +70,7 @@ export const apiRequest = async (url, options = {}) => {
             // Retry original request with new access token
             response = await fetch(url, {
                 ...options,
-                headers: {
-                    ...options.headers,
-                    Authorization: `Bearer ${newAccessToken}`
-                }
+                headers: createHeaders(newAccessToken)
             });
 
         } catch (error) {

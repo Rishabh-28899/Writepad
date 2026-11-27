@@ -25,16 +25,20 @@ const NoteState = (props) => {
         }
 
         try {
-            const response = await apiRequest(`${host}/api/Notes/all`, {
-                method: "GET"
-            });
+            const response = await apiRequest(
+                `${host}/api/Notes/all`,
+                {
+                    method: "GET"
+                }
+            );
 
-            console.log("API Status:", response.status);
+            console.log("Get Notes API Status:", response.status);
 
-            if (!response.ok) {
-                const errorText = await response.text();
+            const result = await response.json();
 
-                console.error("API Error Response:", errorText);
+            console.log("Get Notes API Response:", result);
+
+            if (!response.ok || !result.success) {
 
                 if (
                     (response.status === 401 || response.status === 403) &&
@@ -44,17 +48,19 @@ const NoteState = (props) => {
                 }
 
                 throw new Error(
-                    errorText || `Get notes failed: ${response.status}`
+                    result.message || "Unable to retrieve notes."
                 );
             }
 
-            const data = await response.json();
+            const noteList = Array.isArray(result.data)
+                ? result.data
+                : [];
 
-            const result = Array.isArray(data) ? data : [];
+            console.log("Retrieved notes:", noteList);
 
-            setNotes(result);
+            setNotes(noteList);
 
-            return result;
+            return noteList;
 
         } catch (error) {
             console.error("Get notes error:", error);
@@ -71,25 +77,30 @@ const NoteState = (props) => {
         }
 
         try {
-            const response = await apiRequest(`${host}/api/Notes`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    title,
-                    content,
-                    topic
-                })
-            });
+            const response = await apiRequest(
+                `${host}/api/Notes`,
+                {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        title,
+                        content,
+                        topic
+                    })
+                }
+            );
 
             if (!response.ok) {
                 const message = await response.text();
+
                 throw new Error(
                     message || `Add note failed: ${response.status}`
                 );
             }
 
+            // Refresh notes after adding
             await getNotes();
 
             await Swal.fire({
@@ -121,25 +132,30 @@ const NoteState = (props) => {
         }
 
         try {
-            const response = await apiRequest(`${host}/api/Notes/${id}`, {
-                method: "PUT",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    Title: title,
-                    Content: description,
-                    Topic: tag
-                })
-            });
+            const response = await apiRequest(
+                `${host}/api/Notes/${id}`,
+                {
+                    method: "PUT",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        Title: title,
+                        Content: description,
+                        Topic: tag
+                    })
+                }
+            );
 
             if (!response.ok) {
                 const message = await response.text();
+
                 throw new Error(
                     message || `Update failed: ${response.status}`
                 );
             }
 
+            // Refresh notes after updating
             await getNotes();
 
             await Swal.fire({
@@ -186,17 +202,22 @@ const NoteState = (props) => {
         }
 
         try {
-            const response = await apiRequest(`${host}/api/Notes/${id}`, {
-                method: "DELETE"
-            });
+            const response = await apiRequest(
+                `${host}/api/Notes/${id}`,
+                {
+                    method: "DELETE"
+                }
+            );
 
             if (!response.ok) {
                 const message = await response.text();
+
                 throw new Error(
                     message || `Delete failed: ${response.status}`
                 );
             }
 
+            // Refresh notes after deleting
             await getNotes();
 
             await Swal.fire({
@@ -236,6 +257,7 @@ const NoteState = (props) => {
 };
 
 export default NoteState;
+
 
 
 
