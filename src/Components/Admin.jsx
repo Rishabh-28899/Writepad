@@ -38,14 +38,12 @@ async function getAdminData(endpoint, signal) {
         );
     }
 
-    // Handle standardized ApiResponse<T>
     if (result?.success === false) {
         throw new Error(
             result.message || "Unable to retrieve Admin data."
         );
     }
 
-    // Return data from ApiResponse<T>, or raw JSON
     return result && Object.hasOwn(result, "data")
         ? result.data
         : result;
@@ -63,30 +61,37 @@ function Admin() {
 
     // Dashboard data
     const [stats, setStats] = useState(initialStats);
-    const [users, setUsers] = useState([]);
     const [notes, setNotes] = useState([]);
 
-    // Loading and error states
+    // Users data
+    const [users, setUsers] = useState([]);
+
+    // Users pagination
+    const [pageNumber, setPageNumber] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalUsers, setTotalUsers] = useState(0);
+    const [totalPages, setTotalPages] = useState(0);
+
+    // Users loading and error
+    const [usersLoading, setUsersLoading] = useState(true);
+    const [usersError, setUsersError] = useState("");
+
+    // Dashboard loading and error
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    // Used to trigger dashboard refresh
+    // Dashboard refresh
     const [refreshKey, setRefreshKey] = useState(0);
 
     // =====================================
-    // FETCH ADMIN DASHBOARD DATA
+    // FETCH DASHBOARD DATA
     // =====================================
 
     useEffect(() => {
-
         const controller = new AbortController();
 
         const fetchAdminData = async () => {
-
             try {
-
-                await Promise.resolve();
-
                 const token = localStorage.getItem("accessToken");
 
                 if (!token) {
@@ -95,121 +100,133 @@ function Admin() {
                     );
                 }
 
-                // Call all three backend APIs
-                const [
-                    dashboardData,
-                    usersData,
-                    notesData
-                ] = await Promise.all([
-
-                    getAdminData(
-                        "dashboard",
-                        controller.signal
-                    ),
-
-                    getAdminData(
-                        "users",
-                        controller.signal
-                    ),
-
-                    getAdminData(
-                        "notes",
-                        controller.signal
-                    )
-
+                const [dashboardData, notesData] = await Promise.all([
+                    getAdminData("dashboard", controller.signal),
+                    getAdminData("notes", controller.signal)
                 ]);
 
-                // Don't update state if component was unmounted
-                if (controller.signal.aborted) {
-                    return;
-                }
+                if (controller.signal.aborted) return;
 
-                // Update dashboard statistics
                 setStats({
-
                     totalUsers:
                         dashboardData?.totalUsers ??
-                        dashboardData?.TotalUsers ??
-                        0,
+                        dashboardData?.TotalUsers ?? 0,
 
                     totalAdmins:
                         dashboardData?.totalAdmins ??
-                        dashboardData?.TotalAdmins ??
-                        0,
+                        dashboardData?.TotalAdmins ?? 0,
 
                     regularUsers:
                         dashboardData?.regularUsers ??
-                        dashboardData?.RegularUsers ??
-                        0,
+                        dashboardData?.RegularUsers ?? 0,
 
                     totalNotes:
                         dashboardData?.totalNotes ??
-                        dashboardData?.TotalNotes ??
-                        0
-
+                        dashboardData?.TotalNotes ?? 0
                 });
 
-                // Update users
-                setUsers(
-                    Array.isArray(usersData)
-                        ? usersData
-                        : []
-                );
-
-                // Update notes
                 setNotes(
-                    Array.isArray(notesData)
-                        ? notesData
-                        : []
+                    Array.isArray(notesData) ? notesData : []
                 );
 
             } catch (err) {
-
                 if (
                     !controller.signal.aborted &&
                     err.name !== "AbortError"
                 ) {
-                    console.error(
-                        "Admin dashboard error:",
-                        err
-                    );
+                    console.error("Admin dashboard error:", err);
 
                     setError(
                         err.message ||
                         "Unable to load Admin dashboard."
                     );
                 }
-
             } finally {
-
                 if (!controller.signal.aborted) {
                     setLoading(false);
                 }
-
             }
         };
 
         fetchAdminData();
 
-        // Cleanup
-        return () => {
-            controller.abort();
-        };
+        return () => controller.abort();
 
     }, [refreshKey]);
+
+    // =====================================
+    // FETCH PAGINATED USERS
+    // =====================================
+
+    useEffect(() => {
+        const controller = new AbortController();
+
+        const fetchUsers = async () => {
+            try {
+                setUsersLoading(true);
+                setUsersError("");
+
+                const usersData = await getAdminData(
+                    `users/paged?pageNumber=${pageNumber}&pageSize=${pageSize}`,
+                    controller.signal
+                );
+
+                if (controller.signal.aborted) return;
+
+                const items =
+                    usersData?.items ??
+                    usersData?.Items ??
+                    [];
+
+                setUsers(
+                    Array.isArray(items) ? items : []
+                );
+
+                setTotalUsers(
+                    usersData?.totalCount ??
+                    usersData?.TotalCount ??
+                    0
+                );
+
+                setTotalPages(
+                    usersData?.totalPages ??
+                    usersData?.TotalPages ??
+                    0
+                );
+
+            } catch (err) {
+                if (
+                    !controller.signal.aborted &&
+                    err.name !== "AbortError"
+                ) {
+                    console.error("Users pagination error:", err);
+
+                    setUsersError(
+                        err.message || "Unable to load users."
+                    );
+                }
+            } finally {
+                if (!controller.signal.aborted) {
+                    setUsersLoading(false);
+                }
+            }
+        };
+
+        fetchUsers();
+
+        return () => controller.abort();
+
+    }, [pageNumber, pageSize, refreshKey]);
 
     // =====================================
     // REFRESH DASHBOARD
     // =====================================
 
     const handleRefresh = () => {
-
         setLoading(true);
         setError("");
 
-        // Trigger useEffect again
         setRefreshKey(current => current + 1);
-
     };
 
     // =====================================
@@ -217,10 +234,8 @@ function Admin() {
     // =====================================
 
     const changePage = (page) => {
-
         setActivePage(page);
         setSidebarOpen(false);
-
     };
 
     const pageTitles = {
@@ -234,7 +249,6 @@ function Admin() {
     // =====================================
 
     return (
-
         <div className="wp-admin">
 
             {/* SIDEBAR */}
@@ -264,9 +278,7 @@ function Admin() {
 
                     <button
                         className={
-                            activePage === "dashboard"
-                                ? "selected"
-                                : ""
+                            activePage === "dashboard" ? "selected" : ""
                         }
                         onClick={() => changePage("dashboard")}
                     >
@@ -276,9 +288,7 @@ function Admin() {
 
                     <button
                         className={
-                            activePage === "users"
-                                ? "selected"
-                                : ""
+                            activePage === "users" ? "selected" : ""
                         }
                         onClick={() => changePage("users")}
                     >
@@ -288,9 +298,7 @@ function Admin() {
 
                     <button
                         className={
-                            activePage === "notes"
-                                ? "selected"
-                                : ""
+                            activePage === "notes" ? "selected" : ""
                         }
                         onClick={() => changePage("notes")}
                     >
@@ -340,9 +348,7 @@ function Admin() {
                         </button>
 
                         <div>
-                            <h1>
-                                {pageTitles[activePage]}
-                            </h1>
+                            <h1>{pageTitles[activePage]}</h1>
 
                             <p>
                                 Welcome to your WritePad administration panel.
@@ -374,15 +380,12 @@ function Admin() {
                 <section className="wp-admin-content">
 
                     {loading && (
-
                         <div className="wp-admin-message">
                             Loading dashboard data...
                         </div>
-
                     )}
 
                     {error && !loading && (
-
                         <div className="wp-admin-error">
 
                             <strong>
@@ -401,17 +404,14 @@ function Admin() {
                             </p>
 
                         </div>
-
                     )}
 
                     {!loading && !error && (
-
                         <>
 
                             {/* DASHBOARD */}
 
                             {activePage === "dashboard" && (
-
                                 <>
 
                                     <div className="wp-admin-section-title">
@@ -513,30 +513,43 @@ function Admin() {
 
                                     </div>
 
-                                    {/* RECENT USERS */}
+                                    {/* ALL USERS - PAGINATED AND SCROLLABLE */}
 
                                     <div className="wp-admin-panel wp-admin-recent">
 
                                         <div className="wp-admin-panel-heading">
 
-                                            <h3>Recent Users</h3>
-
-                                            <button
-                                                onClick={() => changePage("users")}
-                                            >
-                                                View All
-                                            </button>
+                                            <h3>
+                                                All Registered Users ({totalUsers})
+                                            </h3>
 
                                         </div>
 
-                                        <UsersTable
-                                            users={users.slice(0, 5)}
+                                        {usersError ? (
+                                            <p className="wp-admin-error">
+                                                {usersError}
+                                            </p>
+                                        ) : usersLoading ? (
+                                            <p className="wp-admin-empty">
+                                                Loading users...
+                                            </p>
+                                        ) : (
+                                            <UsersTable
+                                                users={users}
+                                                scrollable={true}
+                                            />
+                                        )}
+
+                                        <UsersPagination
+                                            pageNumber={pageNumber}
+                                            totalPages={totalPages}
+                                            onPageChange={setPageNumber}
+                                            disabled={usersLoading}
                                         />
 
                                     </div>
 
                                 </>
-
                             )}
 
                             {/* USER MANAGEMENT */}
@@ -547,7 +560,9 @@ function Admin() {
 
                                     <div className="wp-admin-panel-heading">
 
-                                        <h3>All Registered Users</h3>
+                                        <h3>
+                                            All Registered Users ({totalUsers})
+                                        </h3>
 
                                         <Link
                                             to="/admin/add-user"
@@ -558,7 +573,24 @@ function Admin() {
 
                                     </div>
 
-                                    <UsersTable users={users} />
+                                    {usersError ? (
+                                        <p className="wp-admin-error">
+                                            {usersError}
+                                        </p>
+                                    ) : usersLoading ? (
+                                        <p className="wp-admin-empty">
+                                            Loading users...
+                                        </p>
+                                    ) : (
+                                        <UsersTable users={users} />
+                                    )}
+
+                                    <UsersPagination
+                                        pageNumber={pageNumber}
+                                        totalPages={totalPages}
+                                        onPageChange={setPageNumber}
+                                        disabled={usersLoading}
+                                    />
 
                                 </div>
 
@@ -579,7 +611,6 @@ function Admin() {
                             )}
 
                         </>
-
                     )}
 
                 </section>
@@ -587,9 +618,7 @@ function Admin() {
             </main>
 
         </div>
-
     );
-
 }
 
 // =====================================
@@ -602,9 +631,7 @@ function StatCard({
     icon,
     color
 }) {
-
     return (
-
         <div className={`wp-admin-stat-card ${color}`}>
 
             <div>
@@ -617,9 +644,7 @@ function StatCard({
             </span>
 
         </div>
-
     );
-
 }
 
 // =====================================
@@ -632,13 +657,11 @@ function RoleBar({
     total,
     color
 }) {
-
     const percentage = total > 0
         ? Math.round((value / total) * 100)
         : 0;
 
     return (
-
         <div className="wp-admin-role-bar">
 
             <div>
@@ -661,42 +684,38 @@ function RoleBar({
             </div>
 
         </div>
-
     );
-
 }
 
 // =====================================
 // USERS TABLE COMPONENT
 // =====================================
 
-function UsersTable({ users }) {
+function UsersTable({ users, scrollable = false }) {
 
     if (!users.length) {
-
         return (
             <p className="wp-admin-empty">
                 No users found.
             </p>
         );
-
     }
 
     return (
-
-        <div className="wp-admin-table-wrapper">
+        <div
+            className={`wp-admin-table-wrapper ${scrollable ? "wp-admin-users-scroll" : ""
+                }`}
+        >
 
             <table className="wp-admin-table">
 
                 <thead>
-
                     <tr>
                         <th>ID</th>
                         <th>Username</th>
                         <th>Email</th>
                         <th>Role</th>
                     </tr>
-
                 </thead>
 
                 <tbody>
@@ -704,43 +723,28 @@ function UsersTable({ users }) {
                     {users.map((user) => {
 
                         const id = user.id ?? user.Id;
-
-                        const username =
-                            user.username ?? user.Username;
-
-                        const email =
-                            user.email ?? user.Email;
-
-                        const role =
-                            user.role ?? user.Role;
+                        const username = user.username ?? user.Username;
+                        const email = user.email ?? user.Email;
+                        const role = user.role ?? user.Role;
 
                         return (
-
                             <tr key={id}>
 
                                 <td>{id}</td>
-
                                 <td>{username}</td>
-
                                 <td>{email}</td>
 
                                 <td>
-
                                     <span
-                                        className={`wp-admin-role-badge ${role === "Admin"
-                                                ? "admin"
-                                                : "user"
+                                        className={`wp-admin-role-badge ${role === "Admin" ? "admin" : "user"
                                             }`}
                                     >
                                         {role}
                                     </span>
-
                                 </td>
 
                             </tr>
-
                         );
-
                     })}
 
                 </tbody>
@@ -748,9 +752,47 @@ function UsersTable({ users }) {
             </table>
 
         </div>
-
     );
+}
 
+// =====================================
+// USERS PAGINATION COMPONENT
+// =====================================
+
+function UsersPagination({
+    pageNumber,
+    totalPages,
+    onPageChange,
+    disabled
+}) {
+    const displayTotalPages = Math.max(totalPages, 1);
+
+    return (
+        <div className="wp-admin-pagination">
+
+            <button
+                onClick={() => onPageChange(pageNumber - 1)}
+                disabled={disabled || pageNumber <= 1}
+            >
+                ← Previous
+            </button>
+
+            <span>
+                Page {pageNumber} of {displayTotalPages}
+            </span>
+
+            <button
+                onClick={() => onPageChange(pageNumber + 1)}
+                disabled={
+                    disabled ||
+                    pageNumber >= totalPages
+                }
+            >
+                Next →
+            </button>
+
+        </div>
+    );
 }
 
 // =====================================
@@ -760,23 +802,19 @@ function UsersTable({ users }) {
 function NotesTable({ notes }) {
 
     if (!notes.length) {
-
         return (
             <p className="wp-admin-empty">
                 No notes found.
             </p>
         );
-
     }
 
     return (
-
         <div className="wp-admin-table-wrapper">
 
             <table className="wp-admin-table">
 
                 <thead>
-
                     <tr>
                         <th>ID</th>
                         <th>Title</th>
@@ -784,7 +822,6 @@ function NotesTable({ notes }) {
                         <th>Created By</th>
                         <th>Created Date</th>
                     </tr>
-
                 </thead>
 
                 <tbody>
@@ -792,29 +829,17 @@ function NotesTable({ notes }) {
                     {notes.map((note) => {
 
                         const id = note.id ?? note.Id;
-
-                        const title =
-                            note.title ?? note.Title;
-
-                        const topic =
-                            note.topic ?? note.Topic;
-
-                        const username =
-                            note.username ?? note.Username;
-
-                        const createdAt =
-                            note.createdAt ?? note.CreatedAt;
+                        const title = note.title ?? note.Title;
+                        const topic = note.topic ?? note.Topic;
+                        const username = note.username ?? note.Username;
+                        const createdAt = note.createdAt ?? note.CreatedAt;
 
                         return (
-
                             <tr key={id}>
 
                                 <td>{id}</td>
-
                                 <td>{title}</td>
-
                                 <td>{topic}</td>
-
                                 <td>{username}</td>
 
                                 <td>
@@ -824,9 +849,7 @@ function NotesTable({ notes }) {
                                 </td>
 
                             </tr>
-
                         );
-
                     })}
 
                 </tbody>
@@ -834,12 +857,9 @@ function NotesTable({ notes }) {
             </table>
 
         </div>
-
     );
-
 }
 
 export default Admin;
-
 
 

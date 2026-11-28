@@ -375,4 +375,85 @@
         width: 100%;
         box-sizing: border-box; 
     }
+
+    /* =====================================
+   SCROLLABLE USERS TABLE ON DASHBOARD
+===================================== */
+
+    .wp-admin-users-scroll {
+        max-height: 350px;
+        overflow-y: auto;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #9ca3af #f1f5f9;
+    }
+
+        /* Sticky table header */
+
+        .wp-admin-users-scroll thead th {
+            position: sticky;
+            top: 0;
+            z-index: 2;
+            background: #f8fafc;
+        }
+
+        /* Chrome and Edge scrollbar */
+
+        .wp-admin-users-scroll::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        .wp-admin-users-scroll::-webkit-scrollbar-thumb {
+            background: #9ca3af;
+            border-radius: 10px;
+        }
+
+        .wp-admin-users-scroll::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+
+    /* =====================================
+   USERS PAGINATION
+===================================== */
+
+    .wp-admin-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 18px;
+        padding: 20px 10px;
+        margin-top: 10px;
+    }
+
+        .wp-admin-pagination button {
+            padding: 9px 16px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            background: #ffffff;
+            color: #1f2937;
+            font-size: 14px;
+            cursor: pointer;
+            transition: 0.2s ease;
+        }
+
+            .wp-admin-pagination button:hover:not(:disabled) {
+                background: #2563eb;
+                color: #ffffff;
+                border-color: #2563eb;
+            }
+
+            .wp-admin-pagination button:disabled {
+                opacity: 0.45;
+                cursor: not-allowed;
+            }
+
+        .wp-admin-pagination span {
+            font-size: 14px;
+            font-weight: 600;
+            color: #374151;
+        }
+
+
 }
+

@@ -1,10 +1,19 @@
 
 import { Navigate, Outlet } from "react-router-dom";
 
-// Decode JWT and get user role
+// =====================================
+// DECODE JWT AND GET USER ROLE
+// =====================================
+
 function getUserRole(token) {
+
     try {
+
         const payload = token.split(".")[1];
+
+        if (!payload) {
+            return null;
+        }
 
         const base64 = payload
             .replace(/-/g, "+")
@@ -18,39 +27,71 @@ function getUserRole(token) {
             atob(base64)
         );
 
-        return (
+        console.log("Decoded JWT Payload:", decoded);
+
+        const role =
             decoded.role ||
-            decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] || 
-            null
-        );
+            decoded.Role ||
+            decoded.roles ||
+            decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"] ||
+            decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/role"] ||
+            null;
+
+        console.log("Detected User Role:", role);
+
+        return Array.isArray(role) ? role[0] : role;
+
     } catch (error) {
+
         console.error("JWT decoding error:", error);
+
         return null;
+
     }
+
 }
+
+// =====================================
+// PROTECTED ROUTE
+// =====================================
 
 function ProtectedRoute({ adminOnly = false }) {
 
     const accessToken = localStorage.getItem("accessToken");
 
-    // Check whether user is logged in
+    // Check login
     if (!accessToken) {
+
         return <Navigate to="/" replace />;
+
     }
 
-    // Check Admin role
+    // Check Admin authorization
     if (adminOnly) {
+
         const role = getUserRole(accessToken);
 
-        if (role !== "Admin") {
+        if (
+            typeof role !== "string" ||
+            role.toLowerCase() !== "admin"
+        ) {
+
+            console.warn(
+                "Access denied: Admin privileges required."
+            );
+
             return <Navigate to="/notes" replace />;
+
         }
+
     }
 
     return <Outlet />;
+
 }
 
 export default ProtectedRoute;
+
 
 
 
