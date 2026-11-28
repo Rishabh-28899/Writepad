@@ -18,7 +18,7 @@ const refreshAccessToken = async () => {
             "Content-Type": "application/json"
         },
         body: JSON.stringify({
-            refreshToken: refreshToken
+            refreshToken
         })
     });
 
@@ -29,7 +29,11 @@ const refreshAccessToken = async () => {
     const result = await response.json();
 
     // Validate standardized API response
-    if (!result.success || !result.data?.accessToken || !result.data?.refreshToken) {
+    if (
+        !result.success ||
+        !result.data?.accessToken ||
+        !result.data?.refreshToken
+    ) {
         throw new Error(
             result.message || "Token refresh failed."
         );
@@ -44,21 +48,52 @@ const refreshAccessToken = async () => {
 
 // Central API request function
 export const apiRequest = async (url, options = {}) => {
+
+    // Extract custom option
+    const { skipRefresh = false, ...requestOptions } = options;
+
     const accessToken = localStorage.getItem("accessToken");
 
-    const createHeaders = (token) => ({
-        ...options.headers,
-        ...(token ? { Authorization: `Bearer ${token}` } : {})
-    });
+    // Create request headers
+    const createHeaders = (token) => {
+        const headers = {
+            ...requestOptions.headers
+        };
 
+        // Add JSON Content-Type automatically
+        if (
+            requestOptions.body &&
+            !(requestOptions.body instanceof FormData) &&
+            !headers["Content-Type"]
+        ) {
+            headers["Content-Type"] = "application/json";
+        }
+
+        // Attach access token
+        if (token) {
+            headers.Authorization = `Bearer ${token}`;
+        }
+
+        return headers;
+    };
+
+    // First API request
     let response = await fetch(url, {
-        ...options,
+        ...requestOptions,
         headers: createHeaders(accessToken)
     });
 
-    // If access token expires, refresh it
-    if (response.status === 401) {
+    // Identify refresh endpoint
+    const isRefreshRequest = url.includes("/api/Auth/refresh");
+
+    // Handle expired access token
+    if (
+        response.status === 401 &&
+        !isRefreshRequest &&
+        !skipRefresh
+    ) {
         try {
+            // Share one refresh request among simultaneous API calls
             if (!refreshPromise) {
                 refreshPromise = refreshAccessToken().finally(() => {
                     refreshPromise = null;
@@ -67,17 +102,21 @@ export const apiRequest = async (url, options = {}) => {
 
             const newAccessToken = await refreshPromise;
 
-            // Retry original request with new access token
+            // Retry original API request
             response = await fetch(url, {
-                ...options,
+                ...requestOptions,
                 headers: createHeaders(newAccessToken)
             });
 
         } catch (error) {
+            console.error("Token refresh failed:", error);
+
+            // Clear authentication data
             localStorage.removeItem("accessToken");
             localStorage.removeItem("refreshToken");
             localStorage.removeItem("userRole");
 
+            // Redirect to login
             window.location.replace("/");
 
             throw error;

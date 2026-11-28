@@ -41,7 +41,8 @@ const NoteState = (props) => {
             if (!response.ok || !result.success) {
 
                 if (
-                    (response.status === 401 || response.status === 403) &&
+                    (response.status === 401 ||
+                        response.status === 403) &&
                     localStorage.getItem("accessToken") === accessToken
                 ) {
                     clearNotes();
@@ -81,9 +82,6 @@ const NoteState = (props) => {
                 `${host}/api/Notes`,
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
                     body: JSON.stringify({
                         title,
                         content,
@@ -92,11 +90,11 @@ const NoteState = (props) => {
                 }
             );
 
-            if (!response.ok) {
-                const message = await response.text();
+            const result = await response.json();
 
+            if (!response.ok || !result.success) {
                 throw new Error(
-                    message || `Add note failed: ${response.status}`
+                    result.message || "Unable to add note."
                 );
             }
 
@@ -136,9 +134,6 @@ const NoteState = (props) => {
                 `${host}/api/Notes/${id}`,
                 {
                     method: "PUT",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
                     body: JSON.stringify({
                         Title: title,
                         Content: description,
@@ -147,11 +142,11 @@ const NoteState = (props) => {
                 }
             );
 
-            if (!response.ok) {
-                const message = await response.text();
+            const result = await response.json();
 
+            if (!response.ok || !result.success) {
                 throw new Error(
-                    message || `Update failed: ${response.status}`
+                    result.message || "Unable to update note."
                 );
             }
 
@@ -180,7 +175,7 @@ const NoteState = (props) => {
 
     // DELETE NOTE
     const deleteNote = async (id) => {
-        const result = await Swal.fire({
+        const confirmation = await Swal.fire({
             title: "Are you sure?",
             text: "This note will be deleted permanently.",
             icon: "warning",
@@ -190,7 +185,7 @@ const NoteState = (props) => {
             cancelButtonText: "Cancel"
         });
 
-        if (!result.isConfirmed) {
+        if (!confirmation.isConfirmed) {
             return false;
         }
 
@@ -209,15 +204,27 @@ const NoteState = (props) => {
                 }
             );
 
-            if (!response.ok) {
-                const message = await response.text();
+            // Handle empty response and JSON response
+            let result = null;
 
+            if (response.status !== 204) {
+                result = await response.json().catch(() => null);
+            }
+
+            if (!response.ok || result?.success === false) {
                 throw new Error(
-                    message || `Delete failed: ${response.status}`
+                    result?.message || "Unable to delete note."
                 );
             }
 
-            // Refresh notes after deleting
+            // Immediately remove deleted note from frontend state
+            setNotes(previousNotes =>
+                previousNotes.filter(note =>
+                    String(note.id ?? note.Id ?? note.noteId ?? note.NoteId) !== String(id)
+                )
+            );
+
+            // Synchronize frontend with backend
             await getNotes();
 
             await Swal.fire({
@@ -257,8 +264,6 @@ const NoteState = (props) => {
 };
 
 export default NoteState;
-
-
 
 
 

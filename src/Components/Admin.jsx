@@ -1,6 +1,7 @@
 
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { apiRequest } from "../Services/apiClient";
 import "./Admin.css";
 
 // ASP.NET Core Admin API
@@ -18,25 +19,36 @@ const initialStats = {
 // COMMON FUNCTION TO CALL ADMIN APIs
 // =====================================
 
-async function getAdminData(endpoint, token, signal) {
-    const response = await fetch(`${ADMIN_API}/${endpoint}`, { 
-        method: "GET",
-        headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "application/json"
-        },
-        signal
-    });
+async function getAdminData(endpoint, signal) {
+    const response = await apiRequest(
+        `${ADMIN_API}/${endpoint}`,
+        {
+            method: "GET",
+            signal
+        }
+    );
+
+    const result = await response.json().catch(() => null);
 
     if (!response.ok) {
-        const message = await response.text();
-
         throw new Error(
-            message || `Request failed with status ${response.status}`
+            result?.message ||
+            result?.title ||
+            `Request failed with status ${response.status}`
         );
     }
 
-    return response.json();
+    // Handle standardized ApiResponse<T>
+    if (result?.success === false) {
+        throw new Error(
+            result.message || "Unable to retrieve Admin data."
+        );
+    }
+
+    // Return data from ApiResponse<T>, or raw JSON
+    return result && Object.hasOwn(result, "data")
+        ? result.data
+        : result;
 }
 
 // =====================================
@@ -73,8 +85,6 @@ function Admin() {
 
             try {
 
-                // Defer execution until after the effect completes.
-                // This avoids synchronous setState calls inside useEffect.
                 await Promise.resolve();
 
                 const token = localStorage.getItem("accessToken");
@@ -94,19 +104,16 @@ function Admin() {
 
                     getAdminData(
                         "dashboard",
-                        token,
                         controller.signal
                     ),
 
                     getAdminData(
                         "users",
-                        token,
                         controller.signal
                     ),
 
                     getAdminData(
                         "notes",
-                        token,
                         controller.signal
                     )
 
@@ -121,23 +128,23 @@ function Admin() {
                 setStats({
 
                     totalUsers:
-                        dashboardData.totalUsers ??
-                        dashboardData.TotalUsers ??
+                        dashboardData?.totalUsers ??
+                        dashboardData?.TotalUsers ??
                         0,
 
                     totalAdmins:
-                        dashboardData.totalAdmins ??
-                        dashboardData.TotalAdmins ??
+                        dashboardData?.totalAdmins ??
+                        dashboardData?.TotalAdmins ??
                         0,
 
                     regularUsers:
-                        dashboardData.regularUsers ??
-                        dashboardData.RegularUsers ??
+                        dashboardData?.regularUsers ??
+                        dashboardData?.RegularUsers ??
                         0,
 
                     totalNotes:
-                        dashboardData.totalNotes ??
-                        dashboardData.TotalNotes ??
+                        dashboardData?.totalNotes ??
+                        dashboardData?.TotalNotes ??
                         0
 
                 });
@@ -230,16 +237,11 @@ function Admin() {
 
         <div className="wp-admin">
 
-            {/* =====================================
-                SIDEBAR
-            ===================================== */}
+            {/* SIDEBAR */}
 
             <aside
-                className={`wp-admin-sidebar ${sidebarOpen ? "open" : ""
-                    }`}
+                className={`wp-admin-sidebar ${sidebarOpen ? "open" : ""}`}
             >
-
-                {/* BRAND */}
 
                 <div className="wp-admin-brand">
 
@@ -258,11 +260,7 @@ function Admin() {
                     MAIN MENU
                 </p>
 
-                {/* SIDEBAR MENU */}
-
                 <nav className="wp-admin-menu">
-
-                    {/* Dashboard */}
 
                     <button
                         className={
@@ -276,8 +274,6 @@ function Admin() {
                         Dashboard
                     </button>
 
-                    {/* Manage Users */}
-
                     <button
                         className={
                             activePage === "users"
@@ -289,8 +285,6 @@ function Admin() {
                         <span>♙</span>
                         Manage Users
                     </button>
-
-                    {/* Manage Notes */}
 
                     <button
                         className={
@@ -304,8 +298,6 @@ function Admin() {
                         Manage Notes
                     </button>
 
-                    {/* Add User / Admin */}
-
                     <Link
                         to="/admin/add-user"
                         className="wp-admin-add-link"
@@ -316,8 +308,6 @@ function Admin() {
                     </Link>
 
                 </nav>
-
-                {/* SIDEBAR FOOTER */}
 
                 <div className="wp-admin-sidebar-footer">
 
@@ -333,19 +323,13 @@ function Admin() {
 
             </aside>
 
-            {/* =====================================
-                MAIN CONTENT
-            ===================================== */}
+            {/* MAIN CONTENT */}
 
             <main className="wp-admin-main">
-
-                {/* HEADER */}
 
                 <header className="wp-admin-header">
 
                     <div className="wp-admin-header-left">
-
-                        {/* MOBILE SIDEBAR BUTTON */}
 
                         <button
                             className="wp-admin-menu-toggle"
@@ -373,8 +357,6 @@ function Admin() {
                             ADMIN
                         </span>
 
-                        {/* REFRESH BUTTON */}
-
                         <button
                             className="wp-admin-refresh"
                             onClick={handleRefresh}
@@ -387,13 +369,9 @@ function Admin() {
 
                 </header>
 
-                {/* =====================================
-                    PAGE CONTENT
-                ===================================== */}
+                {/* PAGE CONTENT */}
 
                 <section className="wp-admin-content">
-
-                    {/* LOADING */}
 
                     {loading && (
 
@@ -402,8 +380,6 @@ function Admin() {
                         </div>
 
                     )}
-
-                    {/* ERROR */}
 
                     {error && !loading && (
 
@@ -428,15 +404,11 @@ function Admin() {
 
                     )}
 
-                    {/* SUCCESSFUL DATA */}
-
                     {!loading && !error && (
 
                         <>
 
-                            {/* =====================================
-                                DASHBOARD
-                            ===================================== */}
+                            {/* DASHBOARD */}
 
                             {activePage === "dashboard" && (
 
@@ -492,8 +464,6 @@ function Admin() {
 
                                     <div className="wp-admin-dashboard-grid">
 
-                                        {/* USER SUMMARY */}
-
                                         <div className="wp-admin-panel">
 
                                             <h3>User Summary</h3>
@@ -513,8 +483,6 @@ function Admin() {
                                             />
 
                                         </div>
-
-                                        {/* QUICK ACTIONS */}
 
                                         <div className="wp-admin-panel">
 
@@ -571,9 +539,7 @@ function Admin() {
 
                             )}
 
-                            {/* =====================================
-                                USER MANAGEMENT
-                            ===================================== */}
+                            {/* USER MANAGEMENT */}
 
                             {activePage === "users" && (
 
@@ -598,9 +564,7 @@ function Admin() {
 
                             )}
 
-                            {/* =====================================
-                                NOTES MANAGEMENT
-                            ===================================== */}
+                            {/* NOTES MANAGEMENT */}
 
                             {activePage === "notes" && (
 
@@ -876,5 +840,6 @@ function NotesTable({ notes }) {
 }
 
 export default Admin;
+
 
 

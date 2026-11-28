@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { apiRequest } from "../Services/apiClient";
 import "./AddUser.css";
 
 const AddUser = () => {
@@ -53,14 +54,10 @@ const AddUser = () => {
                 throw new Error("Please log in first.");
             }
 
-            const response = await fetch(
+            const response = await apiRequest(
                 "https://localhost:7067/api/Admin/users",
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        Authorization: `Bearer ${token}`
-                    },
                     body: JSON.stringify({
                         username: form.username.trim(),
                         email: form.email.trim(),
@@ -88,7 +85,11 @@ const AddUser = () => {
                 );
             }
 
-            setMessage("User created successfully!");
+            if (data && data.success === false) {
+                throw new Error(data.message || "Failed to create user.");
+            }
+
+            setMessage(data?.message || "User created successfully!");
 
             setForm({
                 username: "",

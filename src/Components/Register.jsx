@@ -1,6 +1,7 @@
 
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { apiRequest } from "../Services/apiClient";
 
 const Register = () => {
     const navigate = useNavigate();
@@ -45,18 +46,17 @@ const Register = () => {
         try {
             setLoading(true);
 
-            const response = await fetch(
+            // Registration API using centralized API client
+            const response = await apiRequest(
                 "https://localhost:7067/api/User/register",
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
                     body: JSON.stringify({
                         username,
                         email,
                         password: credentials.password
-                    })
+                    }),
+                    skipRefresh: true
                 }
             );
 
@@ -234,6 +234,3 @@ const Register = () => {
 };
 
 export default Register;
-
-
-

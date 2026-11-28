@@ -2,8 +2,12 @@
 import { useContext } from "react";
 import noteContext from "../context_notes/noteContext";
 import { Link, useLocation, useNavigate } from "react-router-dom";
+import { apiRequest } from "../Services/apiClient";
 
-// Read role from JWT
+// =====================================
+// READ ROLE FROM JWT
+// =====================================
+
 function getAuthInfo() {
     const token = localStorage.getItem("accessToken");
 
@@ -49,30 +53,34 @@ function getAuthInfo() {
     }
 }
 
+// =====================================
+// NAVBAR COMPONENT
+// =====================================
+
 function Navbar() {
     const location = useLocation();
     const navigate = useNavigate();
 
     const { clearNotes } = useContext(noteContext);
 
-    // Get authentication information directly
     const auth = getAuthInfo();
 
-    // Logout with backend refresh-token revocation
+    // =====================================
+    // LOGOUT
+    // =====================================
+
     const handleLogout = async () => {
         const refreshToken = localStorage.getItem("refreshToken");
 
         try {
             if (refreshToken) {
-                const response = await fetch(
+                const response = await apiRequest(
                     "https://localhost:7067/api/Auth/logout",
                     {
                         method: "POST",
-                        headers: {
-                            "Content-Type": "application/json"
-                        },
+                        skipRefresh: true,
                         body: JSON.stringify({
-                            refreshToken: refreshToken
+                            refreshToken
                         })
                     }
                 );
@@ -82,10 +90,17 @@ function Navbar() {
                     response.status
                 );
 
+                const result = await response.json().catch(() => null);
+
                 if (!response.ok) {
                     console.warn(
                         "Backend logout failed:",
-                        response.status
+                        result?.message || response.status
+                    );
+                } else {
+                    console.log(
+                        "Backend logout:",
+                        result?.message || "Logged out successfully."
                     );
                 }
             }
@@ -106,6 +121,10 @@ function Navbar() {
             navigate("/", { replace: true });
         }
     };
+
+    // =====================================
+    // JSX
+    // =====================================
 
     return (
         <nav className="navbar navbar-expand-lg navbar-light bg-light">
@@ -134,7 +153,6 @@ function Navbar() {
 
                     <ul className="navbar-nav me-auto mb-2 mb-lg-0">
 
-                        {/* Home */}
                         <li className="nav-item">
                             <Link
                                 className={`nav-link ${location.pathname === "/" ? "active" : ""
@@ -145,7 +163,6 @@ function Navbar() {
                             </Link>
                         </li>
 
-                        {/* Logged-in user links */}
                         {auth.isLoggedIn && (
                             <>
                                 <li className="nav-item">
@@ -174,7 +191,6 @@ function Navbar() {
                             </>
                         )}
 
-                        {/* Admin-only links */}
                         {auth.isLoggedIn && auth.isAdmin && (
                             <>
                                 <li className="nav-item">
@@ -203,12 +219,9 @@ function Navbar() {
                             </>
                         )}
 
-                        {/* About */}
                         <li className="nav-item">
                             <Link
-                                className={`nav-link ${location.pathname === "/about"
-                                        ? "active"
-                                        : ""
+                                className={`nav-link ${location.pathname === "/about" ? "active" : ""
                                     }`}
                                 to="/about"
                             >
@@ -218,7 +231,6 @@ function Navbar() {
 
                     </ul>
 
-                    {/* Login, Register and Logout */}
                     <div className="d-flex me-3">
 
                         {!auth.isLoggedIn ? (
@@ -255,5 +267,4 @@ function Navbar() {
 }
 
 export default Navbar;
-
 

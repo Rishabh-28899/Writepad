@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { showAlert } from "./Alert";
+import { apiRequest } from "../Services/apiClient";
 
 function Home() {
     const [username, setUsername] = useState("");
@@ -27,13 +28,12 @@ function Home() {
 
         try {
             // 1. Login API
-            const response = await fetch(
+            // Skip token refresh because the user is not authenticated yet.
+            const response = await apiRequest(
                 "https://localhost:7067/api/Auth/login",
                 {
                     method: "POST",
-                    headers: {
-                        "Content-Type": "application/json"
-                    },
+                    skipRefresh: true,
                     body: JSON.stringify({
                         username: username.trim(),
                         password
@@ -41,12 +41,12 @@ function Home() {
                 }
             );
 
-            const result = await response.json();
+            const result = await response.json().catch(() => null);
 
-            if (!response.ok || !result.success) {
+            if (!response.ok || !result?.success) {
                 await showAlert(
                     "Login Failed!",
-                    result.message || "Invalid username or password.",
+                    result?.message || "Invalid username or password.",
                     "error"
                 );
                 return;
@@ -70,15 +70,16 @@ function Home() {
             localStorage.setItem("refreshToken", refreshToken);
 
             // 4. Get authenticated user's actual details
-            const userResponse = await fetch(
+            // apiRequest automatically attaches the access token
+            // and refreshes it if necessary.
+            const userResponse = await apiRequest(
                 "https://localhost:7067/api/User/getuser",
                 {
-                    method: "GET",
-                    headers: {
-                        Authorization: `Bearer ${accessToken}`
-                    }
+                    method: "GET"
                 }
             );
+
+            const userResult = await userResponse.json().catch(() => null);
 
             if (!userResponse.ok) {
                 localStorage.removeItem("accessToken");
@@ -87,23 +88,23 @@ function Home() {
 
                 await showAlert(
                     "Login Error",
-                    "Unable to verify your account role. Please check the backend.",
+                    userResult?.message ||
+                    "Unable to verify your account role.",
                     "error"
                 );
                 return;
             }
 
-            const userResult = await userResponse.json();
-
-            // GetUser also returns ApiResponse<T>
-            if (!userResult.success || !userResult.data) {
+            // GetUser returns ApiResponse<T>
+            if (!userResult?.success || !userResult.data) {
                 localStorage.removeItem("accessToken");
                 localStorage.removeItem("refreshToken");
                 localStorage.removeItem("userRole");
 
                 await showAlert(
                     "Login Error",
-                    userResult.message || "Unable to retrieve user details.",
+                    userResult?.message ||
+                    "Unable to retrieve user details.",
                     "error"
                 );
                 return;
@@ -163,6 +164,7 @@ function Home() {
 
             await showAlert(
                 "Connection Error!",
+                error.message ||
                 "Unable to connect to the server or verify your account. Check that your backend is running.",
                 "error"
             );
@@ -292,5 +294,6 @@ function Home() {
 }
 
 export default Home;
+
 
 
